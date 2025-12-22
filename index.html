@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilverCare 長者災難應急學習平台</title>
+    <style>
+        /* --- 全局變數：從 PDF 提取的配色 --- */
+        :root {
+            --header-bg: #2c3e50; /* 深藍色頂部 */
+            --header-text: #ffffff;
+            --bg-color: #f0f2f5;
+            --panel-bg: #ffffff;
+            --danger-text: #c0392b; /* 高危紅色 */
+            --accent-green: #27ae60; /* 正確/按鈕綠 */
+            --accent-blue: #2980b9; /* 下一步按鈕藍 */
+            --accent-orange: #e67e22; /* 暫停/重置橙 */
+            --text-main: #333;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- 頂部標題列 (參考 PDF p.17) --- */
+        header {
+            background-color: var(--header-bg);
+            color: var(--header-text);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .header-title { font-size: 1.4rem; font-weight: bold; letter-spacing: 1px; }
+        .emergency-call { color: #ff6b6b; font-weight: bold; font-size: 1.2rem; }
+        .header-btns button {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* --- 主佈局區域 (Grid System) --- */
+        .main-container {
+            display: grid;
+            grid-template-columns: 250px 1fr 250px; /* 左側欄 - 中間內容 - 右側欄 */
+            gap: 20px;
+            padding: 20px;
+            flex: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 通用卡片樣式 */
+        .panel {
+            background: var(--panel-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- 左側：訓練狀態 --- */
+        .status-panel h3 { margin-top: 0; color: #7f8c8d; font-size: 1rem; }
+        .status-item { margin-bottom: 25px; }
+        .label { font-size: 0.9rem; color: #95a5a6; margin-bottom: 5px; display: block; }
+        .value { font-size: 1.2rem; font-weight: bold; color: var(--text-main); }
+        .danger-high { color: var(--danger-text); font-size: 1.4rem; }
+        
+        .progress-bar-bg {
+            background: #ecf0f1;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-bar-fill {
+            background: #3498db;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* --- 中間：場景與互動 --- */
+        .game-panel {
+            position: relative;
+            background: #fff;
+            border-top: 5px solid #e74c3c; /* PDF 中的紅色頂條 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scene-header {
+            background: #e74c3c;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin: -20px -20px 20px -20px;
+            border-radius: 5px 5px 0 0;
+        }
+
+        /* 圖片容器 */
+        .scene-display {
+            flex: 1;
+            background: #eee;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .scene-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 確保完整顯示 PDF 截圖 */
+            background-color: #333;
+        }
+
+        /* 疊加層 (綠色勾勾/紅色叉叉) - 參考 PDF p.17 */
+        .overlay-feedback {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            display: none; /* 預設隱藏 */
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+        .big-icon {
+            font-size: 15rem; /* 超大圖標 */
+            font-weight: bold;
+            opacity: 0.9;
+        }
+        .tick { color: #2ecc71; text-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .cross { color: #e74c3c; text-shadow: 0 0 20px rgba(0,0,0,0.5); }
+
+        /* 問題與按鈕區 */
+        .interaction-area {
+            margin-top: 20px;
+        }
+        .question-text {
+            background: #fdf2f2; /* 淺紅背景 */
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            border-left: 5px solid #e74c3c;
+        }
+        .options-row {
+            display: flex;
+            gap: 15px;
+        }
+        .btn-option {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 30px; /* 圓角按鈕 */
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        .btn-option:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* 根據 PDF 配色 */
+        .btn-green { background-color: var(--accent-green); }
+        .btn-blue { background-color: var(--accent-blue); }
+        .btn-orange { background-color: var(--accent-orange); }
+
+        /* --- 右側：分數與提示 --- */
+        .score-display {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .score-number {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .score-total { font-size: 1.2rem; color: #95a5a6; }
+
+        .badges-list { margin-top: 20px; }
+        .badge-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            opacity: 0.3; /* 未獲得時透明 */
+            transition: opacity 0.5s;
+        }
+        .badge-item.earned { opacity: 1; }
+        .badge-icon { font-size: 1.5rem; margin-right: 10px; }
+
+        /* 黃色提示框 (參考 PDF p.17 右下角) */
+        .tip-box {
+            background: #fff9c4;
+            border: 2px solid #f1c40f;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: auto; /* 推到底部 */
+            display: flex;
+            align-items: center;
+        }
+        .tip-icon { font-size: 2rem; margin-right: 10px; color: #d35400; }
+        .tip-text { font-weight: bold; color: #7f8c8d; font-size: 0.9rem; }
+
+        /* 導航按鈕區 */
+        .nav-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        /* --- 手機適配 (RWD) --- */
+        @media (max-width: 900px) {
+            .main-container {
+                grid-template-columns: 1fr; /* 變回單欄 */
+                overflow-y: auto;
+            }
+            .scene-display { min-height: 250px; }
+            .status-panel, .score-panel { flex-direction: row; justify-content: space-between; align-items: center; }
+            .score-number { font-size: 2rem; }
+            .game-panel { order: -1; } /* 把遊戲畫面拉到最上面 */
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">長者災難應急學習平台 - 互動模擬訓練</div>
+        <div class="emergency-call">緊急求助熱線: 999</div>
+        <div class="header-btns" style="display:none"> <button>返回主頁</button>
+            <button>暫停訓練</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        
+        <div class="panel status-panel">
+            <h3>訓練狀態</h3>
+            
+            <div class="status-item">
+                <span class="label">危險等級</span>
+                <span class="value danger-high">▲ 高危</span>
+            </div>
+
+            <div class="status-item">
+                <span class="label">剩餘時間</span>
+                <span class="value" id="timer">03:00</span>
+            </div>
+
+            <div class="status-item">
+                <span class="label">完成進度</span>
+                <div class="value" id="progress-text">0%</div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-bar"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:auto">
+                <button class="btn-option btn-orange" onclick="location.reload()" style="font-size:0.9rem; padding:10px;">⟳ 重新開始訓練</button>
+            </div>
+        </div>
+
+        <div class="panel game-panel">
+            <div class="scene-header" id="level-title">火災逃生模擬 - 第1關</div>
+            
+            <div class="scene-display">
+                <img id="scene-img" src="scene1.jpg" alt="Scene" onerror="this.style.display='none'; this.parentElement.innerText='請放入圖片 scene1.jpg'">
+                
+                <div id="feedback-overlay" class="overlay-feedback">
+                    <div id="feedback-icon" class="big-icon"></div>
+                </div>
+            </div>
+
+            <div class="interaction-area">
+                <div class="question-text" id="scenario-text">
+                    情境描述：您在家中客廳休息時，突然發現廚房傳出濃煙...
+                </div>
+                
+                <div class="options-row" id="options-container">
+                    <button class="btn-option btn-green">選項 A</button>
+                    <button class="btn-option btn-green">選項 B</button>
+                </div>
+
+                <div class="nav-controls" id="nav-controls" style="display:none;">
+                    <button class="btn-option btn-green" onclick="showAnswerDetails()">查看正確答案</button>
+                    <button class="btn-option btn-blue" onclick="nextScene()">下一個場景 →</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel score-panel">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button style="border:1px solid #ddd; background:none; padding:5px; border-radius:5px;">🔊 語音</button>
+                <button style="border:1px solid #ddd; background:none; padding:5px; border-radius:5px;">Aa 字體</button>
+            </div>
+
+            <div class="score-display" style="margin-top:20px;">
+                <span class="label">安全分數</span>
+                <div class="score-number" id="score-val">0</div>
+                <span class="score-total">/ 100</span>
+            </div>
+
+            <div class="badges-list">
+                <span class="label">獲得徽章</span>
+                <div class="badge-item" id="badge-calm">
+                    <span class="badge-icon">🏆</span>
+                    <span>冷靜應對</span>
+                </div>
+                <div class="badge-item" id="badge-fast">
+                    <span class="badge-icon">⚡</span>
+                    <span>快速反應</span>
+                </div>
+                <div class="badge-item" id="badge-perfect">
+                    <span class="badge-icon">⭐</span>
+                    <span>完美逃生</span>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-icon">⚠️</div>
+                <div class="tip-text">
+                    記住：不要乘坐電梯！<br>要走樓梯逃生！
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    // --- 資料結構 (對應 PDF 內容) ---
+    const scenarios = [
+        {
+            // PDF Page 16/17
+            id: 1,
+            title: "火災逃生模擬 - 第1關: 廚房起火",
+            desc: "情境描述：您在家中客廳休息時，突然發現廚房傳出濃煙，火勢正在蔓延。現在您需要做出正確的決定來保護自己的安全。",
+            img: "scene1.jpg",
+            options: [
+                { text: "立刻撥打999並準備走佬袋", correct: true },
+                { text: "去廚房查看火勢並試圖滅火", correct: false }
+            ]
+        },
+        {
+            // PDF Page 18/19
+            id: 2,
+            title: "火災逃生模擬 - 第2關: 準備逃生",
+            desc: "準備逃生，面對緊閉的房門，您應該如何檢查？",
+            img: "scene2.jpg",
+            options: [
+                { text: "用手背試探門把手溫度", correct: true },
+                { text: "直接打開門查看情況", correct: false }
+            ]
+        },
+        {
+            // PDF Page 20/21
+            id: 3,
+            title: "火災逃生模擬 - 第3關: 選擇路線",
+            desc: "樓梯間有兩條通道，一條充滿煙霧但較近，另一條無煙但較遠。選擇哪條逃生通道？",
+            img: "scene3.jpg",
+            options: [
+                { text: "離我遠但是沒有煙霧的", correct: true },
+                { text: "離我近但是有煙霧的", correct: false }
+            ]
+        },
+        {
+            // PDF Page 22/23
+            id: 4,
+            title: "火災逃生模擬 - 第4關: 室內避險",
+            desc: "如無法逃出被困室內，您會怎麼做？",
+            img: "scene5.jpg",
+            options: [
+                { text: "報警並揮舞鮮豔衣物/光源", correct: true },
+                { text: "隔壁無火，試試從窗外爬過去", correct: false }
+            ]
+        }
+    ];
+
+    let currentStep = 0;
+    let score = 0;
+    let timeLeft = 165; // 02:45
+    let timerInterval;
+
+    // DOM 元素
+    const elScore = document.getElementById('score-val');
+    const elTimer = document.getElementById('timer');
+    const elProgressText = document.getElementById('progress-text');
+    const elProgressBar = document.getElementById('progress-bar');
+    const elSceneImg = document.getElementById('scene-img');
+    const elScenarioText = document.getElementById('scenario-text');
+    const elLevelTitle = document.getElementById('level-title');
+    const elOptionsContainer = document.getElementById('options-container');
+    const elNavControls = document.getElementById('nav-controls');
+    const elFeedbackOverlay = document.getElementById('feedback-overlay');
+    const elFeedbackIcon = document.getElementById('feedback-icon');
+
+    // 初始化
+    function initGame() {
+        renderScene();
+        startTimer();
+    }
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            let s = (timeLeft % 60).toString().padStart(2, '0');
+            elTimer.innerText = `${m}:${s}`;
+            if(timeLeft <= 0) clearInterval(timerInterval);
+        }, 1000);
+    }
+
+    function renderScene() {
+        if (currentStep >= scenarios.length) {
+            showEndScreen();
+            return;
+        }
+
+        const data = scenarios[currentStep];
+        
+        // 更新界面文字與圖片
+        elLevelTitle.innerText = data.title;
+        elScenarioText.innerText = data.desc;
+        elSceneImg.src = data.img;
+        elSceneImg.style.display = 'block'; // 重置圖片顯示
+        
+        // 更新進度條
+        let progress = Math.round((currentStep / scenarios.length) * 100);
+        elProgressText.innerText = `${progress}%`;
+        elProgressBar.style.width = `${progress}%`;
+
+        // 重置按鈕區
+        elOptionsContainer.style.display = 'flex';
+        elNavControls.style.display = 'none';
+        elFeedbackOverlay.style.display = 'none';
+
+        // 生成按鈕
+        elOptionsContainer.innerHTML = '';
+        data.options.forEach((opt, index) => {
+            let btn = document.createElement('button');
+            btn.className = 'btn-option btn-green';
+            btn.innerText = opt.text;
+            btn.onclick = () => handleChoice(opt.correct);
+            elOptionsContainer.appendChild(btn);
+        });
+    }
+
+    function handleChoice(isCorrect) {
+        // 顯示反饋 (勾勾或叉叉)
+        elFeedbackOverlay.style.display = 'flex';
+        
+        if (isCorrect) {
+            elFeedbackIcon.innerHTML = '✔'; // PDF 中的綠色大勾
+            elFeedbackIcon.className = 'big-icon tick';
+            score += 25; // 4關，滿分100
+            elScore.innerText = score;
+            updateBadges();
+        } else {
+            elFeedbackIcon.innerHTML = '✘'; // PDF 中的紅色大叉
+            elFeedbackIcon.className = 'big-icon cross';
+        }
+
+        // 切換到底部導航
+        elOptionsContainer.style.display = 'none';
+        elNavControls.style.display = 'flex';
+    }
+
+    function updateBadges() {
+        // 簡單邏輯：分數夠高就亮起徽章
+        if (score >= 25) document.getElementById('badge-calm').classList.add('earned');
+        if (score >= 75 && timeLeft > 100) document.getElementById('badge-fast').classList.add('earned');
+        if (score >= 100) document.getElementById('badge-perfect').classList.add('earned');
+    }
+
+    function nextScene() {
+        currentStep++;
+        renderScene();
+    }
+    
+    function showAnswerDetails() {
+        alert("這裡會顯示 PDF 中的詳細自救科普講解 (Source: 85)");
+    }
+
+    function showEndScreen() {
+        // 顯示成功畫面 (PDF p.24)
+        elLevelTitle.innerText = "訓練結束";
+        elScenarioText.innerHTML = `<h2 style="color:#27ae60">逃生成功！</h2><p>您已完成所有模擬訓練。</p>`;
+        elSceneImg.src = "success.jpg";
+        elOptionsContainer.innerHTML = `<button class="btn-option btn-orange" onclick="location.reload()">重新開始訓練</button>`;
+        elOptionsContainer.style.display = 'block';
+        elNavControls.style.display = 'none';
+        elFeedbackOverlay.style.display = 'none';
+        
+        // 滿進度
+        elProgressText.innerText = "100%";
+        elProgressBar.style.width = "100%";
+        clearInterval(timerInterval);
+    }
+
+    // 啟動
+    initGame();
+
+</script>
+</body>
+</html>
