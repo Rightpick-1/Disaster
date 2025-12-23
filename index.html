@@ -26,7 +26,7 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: auto;
         }
 
         /* --- 頂部標題列 (參考 PDF p.17) --- */
@@ -547,8 +547,14 @@
     function showEndScreen() {
         // 顯示成功畫面 (PDF p.24)
         elLevelTitle.innerText = "訓練結束";
-        elScenarioText.innerHTML = `<h2 style="color:#27ae60">逃生成功！</h2><p>您已完成所有模擬訓練。</p>`;
-        elSceneImg.src = "success.jpg";
+        if(score>50){
+            elScenarioText.innerHTML = `<h2 style="color:#27ae60">逃生成功！</h2><p>您已完成所有模擬訓練。</p>`;
+            elSceneImg.src = "./images/逃生成功.png";
+        }
+        else{
+            elScenarioText.innerHTML = `<h2 style="color:#e74c3c">再试一次！</h2><p>您已完成所有模擬訓練。</p>`;
+            elSceneImg.src = "./images/逃生失敗.png";
+        }
         elOptionsContainer.innerHTML = `<button class="btn-option btn-orange" onclick="location.reload()">重新開始訓練</button>`;
         elOptionsContainer.style.display = 'block';
         elNavControls.style.display = 'none';
