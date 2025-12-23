@@ -268,7 +268,7 @@
 
             <div class="status-item">
                 <span class="label">剩餘時間</span>
-                <span class="value" id="timer">03:00</span>
+                <span class="value" id="timer">02:45</span>
             </div>
 
             <div class="status-item">
@@ -399,6 +399,44 @@
         }
     ];
 
+    const display_for_right = [
+        {
+            id: 1,
+            img: "./images/s1 right.png"
+        },
+        {
+            id: 2,
+            img: "./images/s2 right.png"
+        },
+        {
+            id: 3,
+            img: "./images/s3 right.png"
+        },
+        {
+            id: 4,
+            img: "./images/s4 right.png"
+        }
+    ];
+
+        const display_for_wrong = [
+        {
+            id: 1,
+            img: "./images/s1 wrong.png"
+        },
+        {
+            id: 2,
+            img: "./images/s2 wrong.png"
+        },
+        {
+            id: 3,
+            img: "./images/s3 wrong.png"
+        },
+        {
+            id: 4,
+            img: "./images/s4 wrong.png"
+        }
+    ];
+
     let currentStep = 0;
     let score = 0;
     let timeLeft = 165; // 02:45
@@ -473,12 +511,14 @@
         elFeedbackOverlay.style.display = 'flex';
         
         if (isCorrect) {
+            renderRight();
             elFeedbackIcon.innerHTML = '✔'; // PDF 中的綠色大勾
             elFeedbackIcon.className = 'big-icon tick';
             score += 25; // 4關，滿分100
             elScore.innerText = score;
             updateBadges();
         } else {
+            renderWrong();
             elFeedbackIcon.innerHTML = '✘'; // PDF 中的紅色大叉
             elFeedbackIcon.className = 'big-icon cross';
         }
@@ -518,6 +558,16 @@
         elProgressText.innerText = "100%";
         elProgressBar.style.width = "100%";
         clearInterval(timerInterval);
+    }
+
+    function renderRight(){
+        data = display_for_right[currentStep];
+        elSceneImg.src = data.img;
+    }
+
+    function renderWrong(){
+        data = display_for_wrong[currentStep];
+        elSceneImg.src = data.img;
     }
 
     // 啟動
