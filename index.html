@@ -1,584 +1,605 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SilverCare 長者災難應急學習平台</title>
+    <title>SilverCare Disaster Emergency Learning Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="icons.css">
+    <script src="language.js"></script>
     <style>
-        /* --- 全局變數：從 PDF 提取的配色 --- */
-        :root {
-            --header-bg: #2c3e50; /* 深藍色頂部 */
-            --header-text: #ffffff;
-            --bg-color: #f0f2f5;
-            --panel-bg: #ffffff;
-            --danger-text: #c0392b; /* 高危紅色 */
-            --accent-green: #27ae60; /* 正確/按鈕綠 */
-            --accent-blue: #2980b9; /* 下一步按鈕藍 */
-            --accent-orange: #e67e22; /* 暫停/重置橙 */
-            --text-main: #333;
-            --border-radius: 8px;
-        }
-
-        body {
-            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
-            background-color: var(--bg-color);
+        /* Modern Design with Background Image */
+        body.index2-design {
+            background: url('pic/background_index.png') center center / cover no-repeat fixed;
             margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: auto;
+            padding: 0;
+            position: relative;
         }
 
-        /* --- 頂部標題列 (參考 PDF p.17) --- */
-        header {
-            background-color: var(--header-bg);
-            color: var(--header-text);
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 10;
+        body.index2-design::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%);
+            z-index: 0;
+            pointer-events: none;
         }
 
-        .header-title { font-size: 1.4rem; font-weight: bold; letter-spacing: 1px; }
-        .emergency-call { color: #ff6b6b; font-weight: bold; font-size: 1.2rem; }
-        .header-btns button {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.4);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            margin-left: 10px;
+        .index2-wrapper {
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            position: relative;
+            z-index: 1;
+            overflow: visible;
         }
 
-        /* --- 主佈局區域 (Grid System) --- */
-        .main-container {
+        .index2-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .index2-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--foreground);
+            margin-bottom: 0.75rem;
+            text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8);
+            letter-spacing: -0.02em;
+        }
+
+        .index2-subtitle {
+            font-size: 1rem;
+            color: var(--muted-foreground);
+            font-weight: 500;
+        }
+
+        .index2-cards-container {
             display: grid;
-            grid-template-columns: 250px 1fr 250px; /* 左側欄 - 中間內容 - 右側欄 */
-            gap: 20px;
-            padding: 20px;
-            flex: 1;
-            max-width: 1400px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            max-width: 1000px;
             margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
+            position: relative;
+            overflow: visible;
         }
 
-        /* 通用卡片樣式 */
-        .panel {
-            background: var(--panel-bg);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        .index2-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.75rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             display: flex;
             flex-direction: column;
-        }
-
-        /* --- 左側：訓練狀態 --- */
-        .status-panel h3 { margin-top: 0; color: #7f8c8d; font-size: 1rem; }
-        .status-item { margin-bottom: 25px; }
-        .label { font-size: 0.9rem; color: #95a5a6; margin-bottom: 5px; display: block; }
-        .value { font-size: 1.2rem; font-weight: bold; color: var(--text-main); }
-        .danger-high { color: var(--danger-text); font-size: 1.4rem; }
-        
-        .progress-bar-bg {
-            background: #ecf0f1;
-            height: 10px;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-top: 5px;
-        }
-        .progress-bar-fill {
-            background: #3498db;
-            height: 100%;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        /* --- 中間：場景與互動 --- */
-        .game-panel {
-            position: relative;
-            background: #fff;
-            border-top: 5px solid #e74c3c; /* PDF 中的紅色頂條 */
-            display: flex;
-            flex-direction: column;
-        }
-
-        .scene-header {
-            background: #e74c3c;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-            margin: -20px -20px 20px -20px;
-            border-radius: 5px 5px 0 0;
-        }
-
-        /* 圖片容器 */
-        .scene-display {
-            flex: 1;
-            background: #eee;
-            border-radius: 4px;
-            position: relative;
-            overflow: hidden;
-            min-height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .scene-display img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* 確保完整顯示 PDF 截圖 */
-            background-color: #333;
-        }
-
-        /* 疊加層 (綠色勾勾/紅色叉叉) - 參考 PDF p.17 */
-        .overlay-feedback {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4);
-            display: none; /* 預設隱藏 */
-            justify-content: center;
-            align-items: center;
-            z-index: 5;
-        }
-        .big-icon {
-            font-size: 15rem; /* 超大圖標 */
-            font-weight: bold;
-            opacity: 0.9;
-        }
-        .tick { color: #2ecc71; text-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .cross { color: #e74c3c; text-shadow: 0 0 20px rgba(0,0,0,0.5); }
-
-        /* 問題與按鈕區 */
-        .interaction-area {
-            margin-top: 20px;
-        }
-        .question-text {
-            background: #fdf2f2; /* 淺紅背景 */
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            line-height: 1.5;
-            border-left: 5px solid #e74c3c;
-        }
-        .options-row {
-            display: flex;
-            gap: 15px;
-        }
-        .btn-option {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 30px; /* 圓角按鈕 */
-            font-size: 1.1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            transition: all 0.2s;
-            color: white;
-            font-weight: bold;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            position: relative;
+            overflow: visible;
         }
-        .btn-option:active { transform: translateY(4px); box-shadow: none; }
-        
-        /* 根據 PDF 配色 */
-        .btn-green { background-color: var(--accent-green); }
-        .btn-blue { background-color: var(--accent-blue); }
-        .btn-orange { background-color: var(--accent-orange); }
 
-        /* --- 右側：分數與提示 --- */
-        .score-display {
-            text-align: center;
-            margin-bottom: 30px;
+        .index2-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.05) 0%, rgba(234, 88, 12, 0.02) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
-        .score-number {
-            font-size: 3.5rem;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .score-total { font-size: 1.2rem; color: #95a5a6; }
 
-        .badges-list { margin-top: 20px; }
-        .badge-item {
+        .index2-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(234, 88, 12, 0.2);
+        }
+
+        .index2-card:hover::before {
+            opacity: 1;
+        }
+
+        .index2-card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--foreground);
+            margin-bottom: 1.25rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .index2-card-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 1.25rem;
+            background: var(--muted);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .index2-card:hover .index2-card-image {
+            transform: scale(1.05);
+        }
+
+        .index2-card-content {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .index2-stat-row {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 0.75rem;
+        }
+
+        .index2-stat-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--orange-600);
+            margin-right: 0.5rem;
+        }
+
+        .index2-stat-value {
+            font-size: 0.9375rem;
+            color: var(--foreground);
+            font-weight: 600;
+        }
+
+        .index2-stat-description {
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+            margin-top: 0.25rem;
+            margin-bottom: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .index2-info-row {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
-            opacity: 0.3; /* 未獲得時透明 */
-            transition: opacity 0.5s;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
         }
-        .badge-item.earned { opacity: 1; }
-        .badge-icon { font-size: 1.5rem; margin-right: 10px; }
 
-        /* 黃色提示框 (參考 PDF p.17 右下角) */
-        .tip-box {
-            background: #fff9c4;
-            border: 2px solid #f1c40f;
-            padding: 15px;
+        .index2-info-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 0.5rem;
+            opacity: 0.6;
+        }
+
+        .index2-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--muted);
             border-radius: 10px;
-            margin-top: auto; /* 推到底部 */
-            display: flex;
-            align-items: center;
-        }
-        .tip-icon { font-size: 2rem; margin-right: 10px; color: #d35400; }
-        .tip-text { font-weight: bold; color: #7f8c8d; font-size: 0.9rem; }
-
-        /* 導航按鈕區 */
-        .nav-controls {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
-        /* --- 手機適配 (RWD) --- */
-        @media (max-width: 900px) {
-            .main-container {
-                grid-template-columns: 1fr; /* 變回單欄 */
-                overflow-y: auto;
+        .index2-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--orange-600) 0%, var(--orange-500) 100%);
+            border-radius: 10px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(234, 88, 12, 0.3);
+        }
+
+        .index2-button {
+            margin-top: 1.25rem;
+            padding: 0.875rem 1.25rem;
+            background: linear-gradient(135deg, var(--orange-600) 0%, var(--orange-500) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .index2-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .index2-button:hover {
+            background: linear-gradient(135deg, var(--orange-700) 0%, var(--orange-600) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4);
+        }
+
+        .index2-button:hover::before {
+            left: 100%;
+        }
+
+        .index2-button:active {
+            transform: translateY(0);
+        }
+
+        /* Position cards relative for grandpa positioning */
+        #emergencyBagCard,
+        #fireEscapeCard {
+            position: relative;
+            overflow: visible;
+        }
+
+        /* Grandpa pointing - Default: pointing at Emergency Bag Packing (right side) */
+        .grandpa-pointer {
+            position: absolute;
+            right: -160px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            width: 280px;
+            height: auto;
+            pointer-events: none;
+            animation: pointAnimationRight 2s ease-in-out infinite;
+            transition: all 0.5s ease;
+        }
+
+        /* Grandpa pointing at Fire Escape (left side, flipped) */
+        .grandpa-pointer.point-to-fire-escape {
+            right: auto;
+            left: -160px;
+            transform: translateY(-50%) scaleX(-1);
+            animation: pointAnimationLeft 2s ease-in-out infinite;
+        }
+
+        .grandpa-pointer img {
+            width: 100%;
+            height: auto;
+            /* Remove white background - multiply blend mode makes white areas blend with background */
+            mix-blend-mode: multiply;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+            /* Ensure proper rendering */
+            image-rendering: auto;
+        }
+
+        @keyframes pointAnimationRight {
+            0%, 100% {
+                transform: translateY(-50%) translateX(0);
             }
-            .scene-display { min-height: 250px; }
-            .status-panel, .score-panel { flex-direction: row; justify-content: space-between; align-items: center; }
-            .score-number { font-size: 2rem; }
-            .game-panel { order: -1; } /* 把遊戲畫面拉到最上面 */
+            50% {
+                transform: translateY(-50%) translateX(-20px);
+            }
+        }
+
+        @keyframes pointAnimationLeft {
+            0%, 100% {
+                transform: translateY(-50%) scaleX(-1) translateX(0);
+            }
+            50% {
+                transform: translateY(-50%) scaleX(-1) translateX(20px);
+            }
+        }
+        
+        /* Ensure grandpa is visible when pointing to fire escape */
+        .grandpa-pointer.point-to-fire-escape {
+            z-index: 15;
+        }
+
+        /* Old Lady - appears when all tasks completed */
+        .old-lady-celebration {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: 300px;
+            height: auto;
+            z-index: 20;
+            pointer-events: none;
+            animation: bounceIn 0.8s ease-out;
+        }
+
+        .old-lady-celebration img {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.2));
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Confetti Container */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--confetti-color);
+            animation: confettiFall linear forwards;
+        }
+
+        @keyframes confettiFall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .index2-cards-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .index2-wrapper {
+                padding: 2rem 1.5rem;
+            }
+
+            .index2-title {
+                font-size: 2rem;
+            }
+
+            .index2-card {
+                padding: 2rem;
+            }
+
+            body.index2-design {
+                background-attachment: scroll;
+            }
+
+            .grandpa-pointer {
+                display: none;
+            }
         }
     </style>
 </head>
-<body>
+<body class="kiosk-mode index2-design">
+    <div class="index2-wrapper">
+        <!-- Header -->
+        <header class="index2-header">
+            <div class="kiosk-language-switcher" style="position: absolute; top: 2rem; right: 2rem;">
+                <button class="kiosk-language-button" onclick="setLanguage('en')" title="English">
+                    <span>EN</span>
+                </button>
+                <button class="kiosk-language-button" onclick="setLanguage('zh_TW')" title="繁體中文">
+                    <span>繁</span>
+                </button>
+            </div>
+            <h1 class="index2-title" data-i18n="platformTitle">SilverCare Disaster Emergency Learning Platform</h1>
+            <p class="index2-subtitle" data-i18n="selectTrainingModule">Select a training module to begin</p>
+        </header>
 
-    <header>
-        <div class="header-title">長者災難應急學習平台 - 互動模擬訓練</div>
-        <div class="emergency-call">緊急求助熱線: 999</div>
-        <div class="header-btns" style="display:none"> <button>返回主頁</button>
-            <button>暫停訓練</button>
-        </div>
-    </header>
-
-    <div class="main-container">
-        
-        <div class="panel status-panel">
-            <h3>訓練狀態</h3>
+        <!-- Two Card Design -->
+        <div class="index2-cards-container">
+            <!-- Grandpa pointing - will be positioned dynamically -->
+            <div class="grandpa-pointer" id="grandpaPointer">
+                <img src="pic/hoisumg.png" alt="Grandpa pointing">
+            </div>
             
-            <div class="status-item">
-                <span class="label">危險等級</span>
-                <span class="value danger-high">▲ 高危</span>
+            <!-- Old Lady Celebration - appears when all tasks completed -->
+            <div class="old-lady-celebration" id="oldLadyCelebration" style="display: none;">
+                <img src="pic/2happyElderly.png" alt="Old Lady Celebration">
             </div>
-
-            <div class="status-item">
-                <span class="label">剩餘時間</span>
-                <span class="value" id="timer">02:45</span>
-            </div>
-
-            <div class="status-item">
-                <span class="label">完成進度</span>
-                <div class="value" id="progress-text">0%</div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="progress-bar"></div>
-                </div>
-            </div>
-
-            <div style="margin-top:auto">
-                <button class="btn-option btn-orange" onclick="location.reload()" style="font-size:0.9rem; padding:10px;">⟳ 重新開始訓練</button>
-            </div>
-        </div>
-
-        <div class="panel game-panel">
-            <div class="scene-header" id="level-title">火災逃生模擬 - 第1關</div>
             
-            <div class="scene-display">
-                <img id="scene-img" src="scene1.jpg" alt="Scene" onerror="this.style.display='none'; this.parentElement.innerText='請放入圖片 scene1.jpg'">
+            <!-- Confetti Container -->
+            <div class="confetti-container" id="confettiContainer"></div>
+            
+            <!-- Fire Escape Simulation Card -->
+            <div class="index2-card" id="fireEscapeCard" onclick="window.location.href='fire-escape.html'">
+                <h2 class="index2-card-title" data-i18n="fireEscapeSimulation">Fire Escape Simulation</h2>
                 
-                <div id="feedback-overlay" class="overlay-feedback">
-                    <div id="feedback-icon" class="big-icon"></div>
+                <img src="pic/Fire Escape Simulation.jpg" alt="Fire Escape Simulation" class="index2-card-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="index2-card-image" style="background: linear-gradient(135deg, var(--orange-100) 0%, var(--orange-200) 100%); display: none; align-items: center; justify-content: center;">
+                    <svg class="module-icon" viewBox="0 0 24 24" fill="var(--orange-600)" style="width: 80px; height: 80px;">
+                        <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>
+                    </svg>
+                </div>
+
+                <div class="index2-card-content">
+                    <div class="index2-stat-row">
+                        <span class="index2-stat-label">Status</span>
+                        <span class="index2-stat-value" id="fireEscapeStatusText">Not Started</span>
+                    </div>
+                    <div class="index2-stat-description" data-i18n="fireEscapeDescription">
+                        Learn critical fire safety procedures through scenario-based training
+                    </div>
+
+                    <div class="index2-info-row">
+                        <svg class="index2-info-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        <span>Completion: <span id="fireEscapeCompletion">0%</span></span>
+                    </div>
+                    <div class="index2-progress-bar">
+                        <div class="index2-progress-fill" id="fireEscapeProgress" style="width: 0%"></div>
+                    </div>
+
+                    <button class="index2-button" data-i18n="startTraining">Start Training</button>
                 </div>
             </div>
 
-            <div class="interaction-area">
-                <div class="question-text" id="scenario-text">
-                    情境描述：您在家中客廳休息時，突然發現廚房傳出濃煙...
-                </div>
+            <!-- Emergency Bag Packing Card -->
+            <div class="index2-card" id="emergencyBagCard" onclick="window.location.href='emergency-bag.html'">
+                <h2 class="index2-card-title" data-i18n="emergencyBagPacking">Emergency Bag Packing</h2>
                 
-                <div class="options-row" id="options-container">
-                    <button class="btn-option btn-green">選項 A</button>
-                    <button class="btn-option btn-green">選項 B</button>
+                <img src="pic/emergency_bag_packing.jpeg" alt="Emergency Bag Packing" class="index2-card-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="index2-card-image" style="background: linear-gradient(135deg, var(--orange-100) 0%, var(--orange-200) 100%); display: none; align-items: center; justify-content: center;">
+                    <svg class="module-icon" viewBox="0 0 24 24" fill="var(--orange-600)" style="width: 80px; height: 80px;">
+                        <path d="M17 6h-2V4c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v2H5c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM9 4h4v2H9V4zm8 15H5V8h2v1c0 .6.4 1 1 1s1-.4 1-1V8h4v1c0 .6.4 1 1 1s1-.4 1-1V8h2v11z"/>
+                    </svg>
                 </div>
 
-                <div class="nav-controls" id="nav-controls" style="display:none;">
-                    <button class="btn-option btn-green" onclick="showAnswerDetails()">查看正確答案</button>
-                    <button class="btn-option btn-blue" onclick="nextScene()">下一個場景 →</button>
+                <div class="index2-card-content">
+                    <div class="index2-stat-row">
+                        <span class="index2-stat-label">Status</span>
+                        <span class="index2-stat-value" id="bagStatusText">Not Started</span>
+                    </div>
+                    <div class="index2-stat-description" data-i18n="emergencyBagDescription">
+                        Master essential emergency supply preparation and prioritization
+                    </div>
+
+                    <div class="index2-info-row">
+                        <svg class="index2-info-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        <span>Completion: <span id="bagCompletion">0%</span></span>
+                    </div>
+                    <div class="index2-progress-bar">
+                        <div class="index2-progress-fill" id="bagProgress" style="width: 0%"></div>
+                    </div>
+
+                    <button class="index2-button" data-i18n="startTraining">Start Training</button>
                 </div>
             </div>
         </div>
-
-        <div class="panel score-panel">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <button style="border:1px solid #ddd; background:none; padding:5px; border-radius:5px;">🔊 語音</button>
-                <button style="border:1px solid #ddd; background:none; padding:5px; border-radius:5px;">Aa 字體</button>
-            </div>
-
-            <div class="score-display" style="margin-top:20px;">
-                <span class="label">安全分數</span>
-                <div class="score-number" id="score-val">0</div>
-                <span class="score-total">/ 100</span>
-            </div>
-
-            <div class="badges-list">
-                <span class="label">獲得徽章</span>
-                <div class="badge-item" id="badge-calm">
-                    <span class="badge-icon">🏆</span>
-                    <span>冷靜應對</span>
-                </div>
-                <div class="badge-item" id="badge-fast">
-                    <span class="badge-icon">⚡</span>
-                    <span>快速反應</span>
-                </div>
-                <div class="badge-item" id="badge-perfect">
-                    <span class="badge-icon">⭐</span>
-                    <span>完美逃生</span>
-                </div>
-            </div>
-
-            <div class="tip-box">
-                <div class="tip-icon">⚠️</div>
-                <div class="tip-text">
-                    記住：不要乘坐電梯！<br>要走樓梯逃生！
-                </div>
-            </div>
-        </div>
-
     </div>
 
-<script>
-    // --- 資料結構 (對應 PDF 內容) ---
-    const scenarios = [
-        {
-            // PDF Page 16/17
-            id: 1,
-            title: "火災逃生模擬 - 第1關: 廚房起火",
-            desc: "情境描述：您在家中客廳休息時，突然發現廚房傳出濃煙，火勢正在蔓延。現在您需要做出正確的決定來保護自己的安全。",
-            img: "./images/s1.png",
-            options: [
-                { text: "立刻撥打999並準備走佬袋", correct: true },
-                { text: "去廚房查看火勢並試圖滅火", correct: false }
-            ]
-        },
-        {
-            // PDF Page 18/19
-            id: 2,
-            title: "火災逃生模擬 - 第2關: 準備逃生",
-            desc: "準備逃生，面對緊閉的房門，您應該如何檢查？",
-            img: "./images/s2.png",
-            options: [
-                { text: "用手背試探門把手溫度", correct: true },
-                { text: "直接打開門查看情況", correct: false }
-            ]
-        },
-        {
-            // PDF Page 20/21
-            id: 3,
-            title: "火災逃生模擬 - 第3關: 選擇路線",
-            desc: "樓梯間有兩條通道，一條充滿煙霧但較近，另一條無煙但較遠。選擇哪條逃生通道？",
-            img: "./images/s3.png",
-            options: [
-                { text: "離我遠但是沒有煙霧的", correct: true },
-                { text: "離我近但是有煙霧的", correct: false }
-            ]
-        },
-        {
-            // PDF Page 22/23
-            id: 4,
-            title: "火災逃生模擬 - 第4關: 室內避險",
-            desc: "如無法逃出被困室內，您會怎麼做？",
-            img: "./images/s4.png",
-            options: [
-                { text: "報警並揮舞鮮豔衣物/光源", correct: true },
-                { text: "隔壁無火，試試從窗外爬過去", correct: false }
-            ]
-        }
-    ];
+    <script src="script.js"></script>
+    <script>
+        // Reset on first launch BEFORE loading anything
+        (function() {
+            const isFirstLaunch = localStorage.getItem('hasLaunchedBefore') !== 'true';
+            if (isFirstLaunch) {
+                // Explicitly set all completion data to 0
+                localStorage.setItem('fireEscapeCompletion', '0');
+                localStorage.setItem('bagTrainingCompletion', '0');
+                localStorage.setItem('fireEscapeAttempts', '0');
+                localStorage.setItem('fireEscapeBestScore', '0');
+                localStorage.setItem('bagAttempts', '0');
+                localStorage.setItem('bagBestScore', '0');
+                localStorage.setItem('safetyScore', '0');
+                localStorage.setItem('hasLaunchedBefore', 'true');
+            }
+        })();
 
-    const display_for_right = [
-        {
-            id: 1,
-            img: "./images/s1 right.png"
-        },
-        {
-            id: 2,
-            img: "./images/s2 right.png"
-        },
-        {
-            id: 3,
-            img: "./images/s3 right.png"
-        },
-        {
-            id: 4,
-            img: "./images/s4 right.png"
-        }
-    ];
-
-        const display_for_wrong = [
-        {
-            id: 1,
-            img: "./images/s1 wrong.png"
-        },
-        {
-            id: 2,
-            img: "./images/s2 wrong.png"
-        },
-        {
-            id: 3,
-            img: "./images/s3 wrong.png"
-        },
-        {
-            id: 4,
-            img: "./images/s4 wrong.png"
-        }
-    ];
-
-    let currentStep = 0;
-    let score = 0;
-    let timeLeft = 165; // 02:45
-    let timerInterval;
-
-    // DOM 元素
-    const elScore = document.getElementById('score-val');
-    const elTimer = document.getElementById('timer');
-    const elProgressText = document.getElementById('progress-text');
-    const elProgressBar = document.getElementById('progress-bar');
-    const elSceneImg = document.getElementById('scene-img');
-    const elScenarioText = document.getElementById('scenario-text');
-    const elLevelTitle = document.getElementById('level-title');
-    const elOptionsContainer = document.getElementById('options-container');
-    const elNavControls = document.getElementById('nav-controls');
-    const elFeedbackOverlay = document.getElementById('feedback-overlay');
-    const elFeedbackIcon = document.getElementById('feedback-icon');
-
-    // 初始化
-    function initGame() {
-        renderScene();
-        startTimer();
-    }
-
-    function startTimer() {
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            let s = (timeLeft % 60).toString().padStart(2, '0');
-            elTimer.innerText = `${m}:${s}`;
-            if(timeLeft <= 0) clearInterval(timerInterval);
-        }, 1000);
-    }
-
-    function renderScene() {
-        if (currentStep >= scenarios.length) {
-            showEndScreen();
-            return;
-        }
-
-        const data = scenarios[currentStep];
-        
-        // 更新界面文字與圖片
-        elLevelTitle.innerText = data.title;
-        elScenarioText.innerText = data.desc;
-        elSceneImg.src = data.img;
-        elSceneImg.style.display = 'block'; // 重置圖片顯示
-        
-        // 更新進度條
-        let progress = Math.round((currentStep / scenarios.length) * 100);
-        elProgressText.innerText = `${progress}%`;
-        elProgressBar.style.width = `${progress}%`;
-
-        // 重置按鈕區
-        elOptionsContainer.style.display = 'flex';
-        elNavControls.style.display = 'none';
-        elFeedbackOverlay.style.display = 'none';
-
-        // 生成按鈕
-        elOptionsContainer.innerHTML = '';
-        data.options.forEach((opt, index) => {
-            let btn = document.createElement('button');
-            btn.className = 'btn-option btn-green';
-            btn.innerText = opt.text;
-            btn.onclick = () => handleChoice(opt.correct);
-            elOptionsContainer.appendChild(btn);
+        // Load progress and update UI
+        window.addEventListener('load', () => {
+            loadProgress();
+            updateIndex2Page();
+            updatePageLanguage();
         });
-    }
-
-    function handleChoice(isCorrect) {
-        // 顯示反饋 (勾勾或叉叉)
-        elFeedbackOverlay.style.display = 'flex';
         
-        if (isCorrect) {
-            renderRight();
-            elFeedbackIcon.innerHTML = '✔'; // PDF 中的綠色大勾
-            elFeedbackIcon.className = 'big-icon tick';
-            score += 25; // 4關，滿分100
-            elScore.innerText = score;
-            updateBadges();
-        } else {
-            renderWrong();
-            elFeedbackIcon.innerHTML = '✘'; // PDF 中的紅色大叉
-            elFeedbackIcon.className = 'big-icon cross';
+        // Re-apply translations when language changes
+        window.addEventListener('languageChanged', () => {
+            updateIndex2Page();
+        });
+
+        function updateIndex2Page() {
+            // Always get values, defaulting to 0 if not set
+            let fireEscapeCompletion = parseInt(localStorage.getItem('fireEscapeCompletion') || '0');
+            let bagCompletion = parseInt(localStorage.getItem('bagTrainingCompletion') || '0');
+            
+            // Ensure values are valid numbers and reset to 0 if invalid
+            if (isNaN(fireEscapeCompletion) || fireEscapeCompletion < 0) fireEscapeCompletion = 0;
+            if (isNaN(bagCompletion) || bagCompletion < 0) bagCompletion = 0;
+            
+            // Update Fire Escape card - always show "Not Started" if 0%
+            if (fireEscapeCompletion > 0) {
+                document.getElementById('fireEscapeStatusText').textContent = getText('completed');
+                document.getElementById('fireEscapeCompletion').textContent = fireEscapeCompletion + '%';
+                document.getElementById('fireEscapeProgress').style.width = fireEscapeCompletion + '%';
+            } else {
+                document.getElementById('fireEscapeStatusText').textContent = getText('notStarted');
+                document.getElementById('fireEscapeCompletion').textContent = '0%';
+                document.getElementById('fireEscapeProgress').style.width = '0%';
+            }
+            
+            // Update Emergency Bag card - always show "Not Started" if 0%
+            if (bagCompletion > 0) {
+                document.getElementById('bagStatusText').textContent = getText('completed');
+                document.getElementById('bagCompletion').textContent = bagCompletion + '%';
+                document.getElementById('bagProgress').style.width = bagCompletion + '%';
+            } else {
+                document.getElementById('bagStatusText').textContent = getText('notStarted');
+                document.getElementById('bagCompletion').textContent = '0%';
+                document.getElementById('bagProgress').style.width = '0%';
+            }
+            
+            // Update grandpa position and show old lady based on completion status
+            const grandpaPointer = document.getElementById('grandpaPointer');
+            const oldLadyCelebration = document.getElementById('oldLadyCelebration');
+            const bothCompleted = (bagCompletion >= 100 && fireEscapeCompletion >= 100);
+            const bagCompleted = (bagCompletion >= 100);
+            
+            if (bothCompleted) {
+                // Both completed - hide grandpa, show old lady and confetti
+                grandpaPointer.style.display = 'none';
+                oldLadyCelebration.style.display = 'block';
+                createConfetti();
+            } else {
+                // Not all completed - show grandpa, hide old lady
+                grandpaPointer.style.display = 'block';
+                oldLadyCelebration.style.display = 'none';
+                
+                if (bagCompleted) {
+                    // Only bag completed - point to fire escape (left side, flipped)
+                    grandpaPointer.classList.add('point-to-fire-escape');
+                } else {
+                    // Bag not completed - point to emergency bag (right side)
+                    grandpaPointer.classList.remove('point-to-fire-escape');
+                }
+            }
         }
 
-        // 切換到底部導航
-        elOptionsContainer.style.display = 'none';
-        elNavControls.style.display = 'flex';
-    }
-
-    function updateBadges() {
-        // 簡單邏輯：分數夠高就亮起徽章
-        if (score >= 25) document.getElementById('badge-calm').classList.add('earned');
-        if (score >= 75 && timeLeft > 100) document.getElementById('badge-fast').classList.add('earned');
-        if (score >= 100) document.getElementById('badge-perfect').classList.add('earned');
-    }
-
-    function nextScene() {
-        currentStep++;
-        renderScene();
-    }
-    
-    function showAnswerDetails() {
-        alert("這裡會顯示 PDF 中的詳細自救科普講解 (Source: 85)");
-    }
-
-    function showEndScreen() {
-        // 顯示成功畫面 (PDF p.24)
-        elLevelTitle.innerText = "訓練結束";
-        if(score>50){
-            elScenarioText.innerHTML = `<h2 style="color:#27ae60">逃生成功！</h2><p>您已完成所有模擬訓練。</p>`;
-            elSceneImg.src = "./images/逃生成功.png";
+        function createConfetti() {
+            const confettiContainer = document.getElementById('confettiContainer');
+            const colors = ['#FF6B35', '#F7931E', '#FFD23F', '#06FFA5', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+            const confettiCount = 100;
+            
+            // Clear existing confetti
+            confettiContainer.innerHTML = '';
+            
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                confettiContainer.appendChild(confetti);
+            }
+            
+            // Remove confetti after animation
+            setTimeout(() => {
+                confettiContainer.innerHTML = '';
+            }, 5000);
         }
-        else{
-            elScenarioText.innerHTML = `<h2 style="color:#e74c3c">再试一次！</h2><p>您已完成所有模擬訓練。</p>`;
-            elSceneImg.src = "./images/逃生失敗.png";
-        }
-        elOptionsContainer.innerHTML = `<button class="btn-option btn-orange" onclick="location.reload()">重新開始訓練</button>`;
-        elOptionsContainer.style.display = 'block';
-        elNavControls.style.display = 'none';
-        elFeedbackOverlay.style.display = 'none';
-        
-        // 滿進度
-        elProgressText.innerText = "100%";
-        elProgressBar.style.width = "100%";
-        clearInterval(timerInterval);
-    }
-
-    function renderRight(){
-        data = display_for_right[currentStep];
-        elSceneImg.src = data.img;
-    }
-
-    function renderWrong(){
-        data = display_for_wrong[currentStep];
-        elSceneImg.src = data.img;
-    }
-
-    // 啟動
-    initGame();
-
-</script>
+    </script>
 </body>
 </html>

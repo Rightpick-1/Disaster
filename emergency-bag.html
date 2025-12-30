@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Bag Training - Disaster Management</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="icons.css">
+    <script src="language.js"></script>
+    <script>
+        // Define ALL drag and drop functions FIRST before HTML tries to use them
+        // Drag and Drop handlers - must be global for inline handlers
+        window.allowDrop = function(ev) {
+            if (ev && ev.preventDefault) {
+                ev.preventDefault();
+                if (ev.dataTransfer) {
+                    ev.dataTransfer.dropEffect = "move";
+                }
+            }
+        };
+        
+        window.handleDragEnter = function(ev) {
+            if (ev && ev.preventDefault) {
+                ev.preventDefault();
+                const target = ev.currentTarget;
+                if (target && target.classList && target.classList.contains('compartment-content')) {
+                    target.classList.add('drag-over');
+                }
+            }
+        };
+        
+        window.handleDragLeave = function(ev) {
+            if (ev) {
+                const target = ev.currentTarget;
+                if (target && target.classList && target.classList.contains('compartment-content')) {
+                    // Only remove if we're actually leaving the element (not just moving to a child)
+                    if (!ev.relatedTarget || !target.contains(ev.relatedTarget)) {
+                        target.classList.remove('drag-over');
+                    }
+                }
+            }
+        };
+        
+        // Placeholder for drop function - will be fully defined in body script after variables are initialized
+        window.drop = function(ev) {
+            if (ev && ev.preventDefault) {
+                ev.preventDefault();
+            }
+            console.warn('Drop function called but not yet fully initialized - this should be replaced');
+        };
+    </script>
+</head>
+<body>
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper no-sidebar">
+        <!-- Platform Header -->
+        <header class="platform-header">
+            <h1 class="header-title" data-i18n="platformTitle">SilverCare Disaster Emergency Learning Platform</h1>
+            <div class="header-right">
+                <div class="language-switcher">
+                    <button class="language-button" onclick="setLanguage('en')" title="English">
+                        <span>EN</span>
+                    </button>
+                    <button class="language-button" onclick="setLanguage('zh_TW')" title="繁體中文">
+                        <span>繁</span>
+                    </button>
+                </div>
+                <button class="notification-button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <span class="notification-dot"></span>
+                </button>
+                <button class="user-button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Training Status Panel -->
+        <div class="status-panel">
+            <div class="status-item">
+                <span class="status-label" data-i18n="activeMode">Active Mode:</span>
+                <span class="status-value mode-gaussian" data-i18n="gaussianMode">Gaussian Mode</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label" data-i18n="currentActivity">Current Activity:</span>
+                <span class="status-value" data-i18n="emergencyBagTraining">Emergency Bag Training</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label" data-i18n="completion">Completion:</span>
+                <span class="status-value" id="completionRate">0%</span>
+            </div>
+            <div class="status-item weight-status">
+                <span class="status-label" data-i18n="weight">Weight:</span>
+                <div class="weight-display-container">
+                    <span class="status-value">
+                        <span id="currentWeight">0.0</span>kg / 
+                        <span class="weight-target">≤1.5kg</span>
+                    </span>
+                    <div class="weight-progress-bar">
+                        <div class="weight-progress-fill" id="weightProgressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Back to Home Button -->
+            <a href="index.html" class="back-link" onclick="window.location.href='index.html'; return false;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                <span data-i18n="backToHome">Back to Home</span>
+            </a>
+            
+            <!-- Contextual Hint -->
+            <div class="hint-box">
+                <span class="hint-icon-small">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                </span>
+                <span class="hint-text-content" data-i18n="hintQuestion">
+                    According to the guide, where should towels and masks be placed for fastest access?
+                </span>
+                <a href="#" class="reference-link" onclick="alert(getText('referenceAlert') || 'Step 2: Correct Packing (PDF p.6)'); return false;" data-i18n="pdfReference">
+                    <strong>Step 2: Correct Packing (PDF p.6)</strong>
+                </a>
+            </div>
+
+            <!-- Drag and Drop Interface -->
+            <div class="packing-interface">
+                <!-- Left Column: Available Items -->
+                <div class="items-column">
+                    <h3 class="column-title">
+                        <span data-i18n="availableItems">Available Items</span>
+                        <svg class="help-icon-small" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                        </svg>
+                    </h3>
+                    <div class="items-list" id="itemsList" style="display: block;">
+                        <div class="packing-item" draggable="true" data-item="wet-towel" data-weight="0.2" data-category="top" ondragstart="window.handleDragStart(event)">
+                            <img src="pic/towel.jpg" alt="Wet towel" class="item-image" onerror="this.style.display='none'">
+                            <div class="item-content">
+                                <span class="item-name" data-i18n="wetTowel">Wet towel</span>
+                                <span class="item-weight">(0.2kg)</span>
+                            </div>
+                        </div>
+                        <div class="packing-item" draggable="true" data-item="smoke-mask" data-weight="0.1" data-category="top" ondragstart="window.handleDragStart(event)">
+                            <img src="pic/FIreMask.jpg" alt="Smoke mask" class="item-image" onerror="this.style.display='none'">
+                            <div class="item-content">
+                                <span class="item-name" data-i18n="smokeMask">Smoke mask</span>
+                                <span class="item-weight">(0.1kg)</span>
+                            </div>
+                        </div>
+                        <div class="packing-item" draggable="true" data-item="phone-powerbank" data-weight="0.4" data-category="middle" ondragstart="window.handleDragStart(event)">
+                            <img src="pic/powerBank.jpg" alt="Phone/Power bank" class="item-image" onerror="this.style.display='none'">
+                            <div class="item-content">
+                                <span class="item-name" data-i18n="phonePowerbank">Phone/Power bank</span>
+                                <span class="item-weight">(0.4kg)</span>
+                            </div>
+                        </div>
+                        <div class="packing-item" draggable="true" data-item="keys-documents" data-weight="0.1" data-category="middle" ondragstart="window.handleDragStart(event)">
+                            <img src="pic/keys.jpg" alt="Keys/Documents" class="item-image" onerror="this.style.display='none'">
+                            <div class="item-content">
+                                <span class="item-name" data-i18n="keysDocuments">Keys/Documents</span>
+                                <span class="item-weight">(0.1kg)</span>
+                            </div>
+                        </div>
+                        <div class="packing-item" draggable="true" data-item="first-aid" data-weight="0.2" data-category="side" ondragstart="window.handleDragStart(event)">
+                            <img src="pic/pills.jpg" alt="First aid medicine" class="item-image" onerror="this.style.display='none'">
+                            <div class="item-content">
+                                <span class="item-name" data-i18n="firstAidMedicine">First aid medicine</span>
+                                <span class="item-weight">(0.2kg)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Completion Status -->
+                    <div class="completion-status" id="completionStatus" style="display: none;">
+                        <div class="completion-status-content">
+                            <svg class="completion-check-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            <span>All items placed</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Safety Score Display -->
+                    <div class="safety-score-left">
+                        <h3 class="column-title" data-i18n="safetyScore">Safety Score</h3>
+                        <div class="safety-score-content">
+                            <span class="score-value-left score-zero" id="safetyScoreLeft">0</span>
+                            <span class="score-max-left">/100</span>
+                            <p class="score-hint">Complete to see score</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Bag Compartments -->
+                <div class="bag-column">
+                    <h3 class="column-title" data-i18n="emergencyBag">Emergency Bag</h3>
+                    <div class="bag-compartments">
+                        <!-- Top Compartment -->
+                        <div class="compartment compartment-top" id="compartment-top" ondrop="window.drop(event)" ondragover="window.allowDrop(event)">
+                            <div class="compartment-header">
+                                <span class="compartment-label" data-i18n="topEasyAccess">Top / Easy Access</span>
+                            </div>
+                            <p class="compartment-description" data-i18n="topDescription">Items needed immediately during evacuation</p>
+                            <div class="compartment-content compartment-content-top" id="top-items" ondrop="window.drop(event)" ondragover="window.allowDrop(event)" ondragenter="window.handleDragEnter(event)" ondragleave="window.handleDragLeave(event)">
+                                <div class="compartment-placeholder" data-i18n="dragItemsHere">Drag items here</div>
+                            </div>
+                        </div>
+
+                        <!-- Middle Compartment -->
+                        <div class="compartment compartment-middle" id="compartment-middle" ondrop="window.drop(event)" ondragover="window.allowDrop(event)">
+                            <div class="compartment-header">
+                                <span class="compartment-label" data-i18n="middleMain">Middle / Main</span>
+                            </div>
+                            <p class="compartment-description" data-i18n="middleDescription">Essential communication and identification items</p>
+                            <div class="compartment-content compartment-content-middle" id="middle-items" ondrop="window.drop(event)" ondragover="window.allowDrop(event)" ondragenter="window.handleDragEnter(event)" ondragleave="window.handleDragLeave(event)">
+                                <div class="compartment-placeholder" data-i18n="dragItemsHere">Drag items here</div>
+                            </div>
+                        </div>
+
+                        <!-- Side Compartment -->
+                        <div class="compartment compartment-side" id="compartment-side" ondrop="window.drop(event)" ondragover="window.allowDrop(event)">
+                            <div class="compartment-header">
+                                <span class="compartment-label" data-i18n="sideSmall">Side / Small</span>
+                            </div>
+                            <p class="compartment-description" data-i18n="sideDescription">Medical supplies and small essential items</p>
+                            <div class="compartment-content compartment-content-side" id="side-items" ondrop="window.drop(event)" ondragover="window.allowDrop(event)" ondragenter="window.handleDragEnter(event)" ondragleave="window.handleDragLeave(event)">
+                                <div class="compartment-placeholder" data-i18n="dragItemsHere">Drag items here</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Validation Message -->
+                    <div class="validation-message" id="validationMessage"></div>
+                </div>
+            </div>
+
+            <!-- Achievement Badges Panel -->
+            <div class="achievement-panel">
+                <h3 class="panel-title" data-i18n="achievements">Achievements</h3>
+                <div class="badges-grid">
+                    <div class="badge-item locked" data-badge="achievement-unlocked">
+                        <div class="badge-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+                            </svg>
+                        </div>
+                        <div class="badge-name" data-i18n="achievementUnlocked">Achievement Unlocked</div>
+                        <div class="badge-status" data-i18n="locked">Locked</div>
+                    </div>
+                    <div class="badge-item locked" data-badge="distribution">
+                        <div class="badge-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                            </svg>
+                        </div>
+                        <div class="badge-name" data-i18n="distributionQuestions">Distribution-related questions</div>
+                        <div class="badge-status" data-i18n="locked">Locked</div>
+                    </div>
+                    <div class="badge-item locked" data-badge="quick-response">
+                        <div class="badge-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7 13l3 3 7-7-1.41-1.41L10 13.17 8.41 11.59z"/>
+                                <path d="M13 2L3 12h3v8h6v-6h2l2-2V2H13zm0 2v6h-2v6H8v-6H6l5-5h2z"/>
+                            </svg>
+                        </div>
+                        <div class="badge-name" data-i18n="quickResponse">Quick Response</div>
+                        <div class="badge-status" data-i18n="locked">Locked</div>
+                    </div>
+                    <div class="badge-item locked" data-badge="perfect-escape">
+                        <div class="badge-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                        </div>
+                        <div class="badge-name" data-i18n="perfectEscape">Perfect Escape</div>
+                        <div class="badge-status" data-i18n="locked">Locked</div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Hint Toggle -->
+        <div class="hint-toggle">
+            <button class="hint-button" id="hintToggle" onclick="toggleHintMode()">
+                <span class="hint-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                    </svg>
+                </span>
+                <span class="hint-text" data-i18n="voice">Voice</span>
+            </button>
+        </div>
+
+        <!-- Submit Button and Emergency Hotline -->
+        <div class="bag-submit-section">
+            <button class="submit-button" id="submitButton" onclick="validateBag()" disabled data-i18n="placeAllItemsToContinue">
+                Place all items to continue
+            </button>
+            <div class="hotline-display-inline">
+                <span class="hotline-label" data-i18n="emergencyHotline">Emergency Hotline</span>
+                <span class="hotline-number">999</span>
+            </div>
+        </div>
+
+        <!-- Dialog Modal for Placement Feedback -->
+        <div class="dialog-overlay" id="dialogOverlay" style="display: none;">
+            <div class="dialog-modal" id="dialogModal">
+                <div class="dialog-header" id="dialogHeader">
+                    <div class="dialog-icon" id="dialogIcon"></div>
+                    <h3 class="dialog-title" id="dialogTitle"></h3>
+                    <button class="dialog-close" onclick="closeDialog()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="dialog-content" id="dialogContent"></div>
+                <div class="dialog-footer">
+                    <button class="dialog-button" onclick="closeDialog()">確定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Screen -->
+        <div class="completion-screen" id="completionScreen" style="display: none;">
+            <div class="completion-content">
+                <div class="completion-card">
+                    <div class="completion-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    <h2 class="completion-title" data-i18n="emergencyBagTrainingComplete">Emergency Bag Training Complete!</h2>
+                    <div class="completion-stats">
+                        <div class="completion-stat">
+                            <span class="stat-label" data-i18n="finalScore">Final Score:</span>
+                            <span class="stat-value" id="finalScore">100/100</span>
+                        </div>
+                        <div class="completion-stat">
+                            <span class="stat-label" data-i18n="totalWeight">Total Weight:</span>
+                            <span class="stat-value" id="finalWeight">0.0kg / 1.5kg</span>
+                        </div>
+                    </div>
+
+                    <!-- Achievement Badges -->
+                    <div class="completion-badges">
+                        <h3 class="completion-section-title" data-i18n="achievementBadges">Achievement Badges</h3>
+                        <div class="completion-badges-grid">
+                            <div class="completion-badge" id="completionBadge1">
+                                <div class="completion-badge-name" data-i18n="achievementUnlocked">Achievement Unlocked</div>
+                                <div class="completion-badge-check" style="display: none;">✓</div>
+                            </div>
+                            <div class="completion-badge" id="completionBadge2">
+                                <div class="completion-badge-name" data-i18n="distributionQuestions">Distribution Questions</div>
+                                <div class="completion-badge-check" style="display: none;">✓</div>
+                            </div>
+                            <div class="completion-badge" id="completionBadge3">
+                                <div class="completion-badge-name" data-i18n="quickResponse">Quick Response</div>
+                                <div class="completion-badge-check" style="display: none;">✓</div>
+                            </div>
+                            <div class="completion-badge" id="completionBadge4">
+                                <div class="completion-badge-name" data-i18n="perfectEscape">Perfect Escape</div>
+                                <div class="completion-badge-check" style="display: none;">✓</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="completion-actions">
+                        <p class="completion-redirect-message" id="redirectMessage" style="display: none;">Redirecting in 5 seconds...</p>
+                        <button class="completion-button secondary" onclick="restartBagTraining()">
+                            <span data-i18n="tryAgain">Try Again</span>
+                        </button>
+                        <button class="completion-button primary" id="completionRedirectButton">
+                            <span data-i18n="backToHome">Back to Home</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav">
+        <div class="mobile-nav-item" onclick="window.location.href='index.html'">
+            <div class="mobile-nav-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+            </div>
+            <span>Home</span>
+        </div>
+        <div class="mobile-nav-item active">
+            <div class="mobile-nav-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                </svg>
+            </div>
+            <span>Prepare</span>
+        </div>
+        <button class="mobile-sos-button">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+        </button>
+        <div class="mobile-nav-item" onclick="window.location.href='fire-escape.html'">
+            <div class="mobile-nav-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                </svg>
+            </div>
+            <span>Alerts</span>
+        </div>
+        <div class="mobile-nav-item">
+            <div class="mobile-nav-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+            </div>
+            <span>Advice</span>
+        </div>
+    </nav>
+
+    <script src="script.js"></script>
+    <script>
+        
+        // Emergency Bag specific functionality
+        let currentWeight = 0;
+        const maxWeight = 1.5;
+        let currentScore = 0; // Track score as items are placed
+        const packedItems = {
+            top: [],
+            middle: [],
+            side: []
+        };
+
+        // handleDragStart and drop functions defined here (allowDrop, handleDragEnter, handleDragLeave are in head)
+        window.handleDragStart = function(ev) {
+            const item = ev.currentTarget || ev.target.closest('.packing-item');
+            if (!item || !item.dataset.item) {
+                console.error('Could not find item element for drag');
+                ev.preventDefault();
+                return false;
+            }
+            
+            const itemId = item.dataset.item;
+            const weight = item.dataset.weight || "0";
+            const category = item.dataset.category || "";
+            
+            try {
+                ev.dataTransfer.effectAllowed = "move";
+                // Set data in multiple formats for browser compatibility
+                ev.dataTransfer.setData("text/plain", itemId);
+                ev.dataTransfer.setData("text", itemId);
+                ev.dataTransfer.setData("weight", weight);
+                ev.dataTransfer.setData("category", category);
+                ev.dataTransfer.setData("compartment", ""); // Empty for items from list
+                ev.dataTransfer.setData("action", "add");
+                
+                console.log('=== DRAG STARTED ===');
+                console.log('Item:', itemId, 'Weight:', weight, 'Category:', category);
+                
+                // Add visual feedback
+                item.style.opacity = '0.5';
+                item.style.cursor = 'grabbing';
+                
+                return true;
+            } catch (e) {
+                console.error('Error in handleDragStart:', e);
+                ev.preventDefault();
+                return false;
+            }
+        };
+        
+        // Correct placement mapping
+        const correctPlacements = {
+            'wet-towel': 'top',
+            'smoke-mask': 'top',
+            'phone-powerbank': 'middle',
+            'keys-documents': 'middle',
+            'first-aid': 'side',
+            'water-books': 'middle'
+        };
+
+        // Explanation messages in Chinese
+        const placementExplanations = {
+            'wet-towel': {
+                correct: '正確!\n保護呼吸道,需立即拿取,請放上層。',
+                incorrect: '錯誤!\n位置不對!應放在上層。\n原因:逃生時需第一時間使用(捂口鼻),必須放在最上層易取處!'
+            },
+            'smoke-mask': {
+                correct: '正確!\n保護呼吸道,需立即拿取,請放上層。',
+                incorrect: '錯誤!\n位置不對!應放在上層。\n原因:逃生時需第一時間使用(捂口鼻),必須放在最上層易取處!'
+            },
+            'phone-powerbank': {
+                correct: '正確!\n手機屬於貴重且較重物品,放在中層保護最安全。',
+                incorrect: '錯誤!\n位置不對!應放在中層。\n原因:手機屬於貴重且較重物品,放在中層保護最安全。'
+            },
+            'keys-documents': {
+                correct: '正確!\n重要文件和鑰匙應放在中間主層,不易掉落。',
+                incorrect: '錯誤!\n位置不對!應放在中層。\n原因:重要文件和鑰匙應放在中間主層,不易掉落。'
+            },
+            'first-aid': {
+                correct: '正確!\n藥物細小易丟,應單獨放在側袋方便尋找。',
+                incorrect: '錯誤!\n位置不對!應放在側袋。\n原因:藥物細小易丟,應單獨放在側袋方便尋找。'
+            },
+            'water-books': {
+                correct: '正確!\n水屬於較重物品,應放在中層。',
+                incorrect: '錯誤!\n這太重了!走佬袋原則是輕便(≤1.5kg),逃生不應帶書。'
+            }
+        };
+
+        window.drop = function(ev) {
+            if (!ev) {
+                console.error('Drop called without event!');
+                return false;
+            }
+            
+            ev.preventDefault();
+            ev.stopPropagation();
+            
+            console.log('=== DROP EVENT TRIGGERED ===');
+            console.log('Current target:', ev.currentTarget);
+            console.log('Target:', ev.target);
+            console.log('DataTransfer types:', ev.dataTransfer ? Array.from(ev.dataTransfer.types) : 'NO DATATRANSFER');
+            
+            if (!ev.dataTransfer) {
+                console.error('No dataTransfer object!');
+                alert('Drop failed: No data transfer');
+                return false;
+            }
+            
+            // Try multiple data formats to get item ID
+            let itemId = ev.dataTransfer.getData("text") || 
+                        ev.dataTransfer.getData("text/plain") || 
+                        ev.dataTransfer.getData("application/x-item-id");
+            const weight = parseFloat(ev.dataTransfer.getData("weight") || "0");
+            const category = ev.dataTransfer.getData("category") || "";
+            const oldCompartment = ev.dataTransfer.getData("compartment") || "";
+            const action = ev.dataTransfer.getData("action") || "add";
+            
+            console.log('Drop data retrieved:', {itemId, weight, category, oldCompartment, action});
+            
+            if (!itemId || itemId === '') {
+                console.error('ERROR: No item ID found in drop data!');
+                console.log('Available types:', Array.from(ev.dataTransfer.types));
+                // Try to get all data
+                for (let i = 0; i < ev.dataTransfer.types.length; i++) {
+                    const type = ev.dataTransfer.types[i];
+                    console.log(`Type ${type}:`, ev.dataTransfer.getData(type));
+                }
+                return false;
+            }
+            
+            // Find the compartment div (could be currentTarget or its parent)
+            let compartmentElement = ev.currentTarget;
+            let compartmentContent = null;
+            
+            // Check if drop happened on compartment-content div
+            if (compartmentElement.classList && compartmentElement.classList.contains('compartment-content')) {
+                compartmentContent = compartmentElement;
+                compartmentElement = compartmentElement.closest('.compartment');
+            } else if (!compartmentElement.id || !compartmentElement.id.startsWith('compartment-')) {
+                // If drop happened on compartment-content, find parent compartment
+                compartmentElement = compartmentElement.closest('.compartment');
+            }
+            
+            if (!compartmentElement) {
+                console.error('Could not find compartment element');
+                return;
+            }
+            
+            const newCompartment = compartmentElement.id.replace('compartment-', '');
+            console.log('Target compartment:', newCompartment);
+
+            // Check if item is being moved from one compartment to another
+            // action was already retrieved above
+            // Check if this item already exists in a compartment
+            const existingItem = document.querySelector(`.compartment-item[data-item="${itemId}"]`);
+            // If action is "move" OR oldCompartment is set, it's coming from a compartment
+            const isMovingFromCompartment = (action === "move" || (oldCompartment && oldCompartment !== '' && oldCompartment !== 'undefined' && oldCompartment !== 'null')) && existingItem;
+            
+            // Don't allow dropping in the same compartment - check this FIRST
+            if (isMovingFromCompartment && oldCompartment === newCompartment) {
+                return;
+            }
+            
+            if (isMovingFromCompartment) {
+                // Item is being moved from one compartment to another
+                // Remove from old compartment first
+                const oldCompartmentElement = document.getElementById(`compartment-${oldCompartment}`);
+                if (!oldCompartmentElement) {
+                    console.error('Old compartment not found:', oldCompartment);
+                    return;
+                }
+                
+                const oldCompartmentContent = oldCompartmentElement.querySelector('.compartment-content');
+                const itemInOldCompartment = oldCompartmentContent.querySelector(`[data-item="${itemId}"]`);
+                
+                if (itemInOldCompartment) {
+                    itemInOldCompartment.remove();
+                    
+                    // Remove from packedItems array
+                    packedItems[oldCompartment] = packedItems[oldCompartment].filter(item => item.id !== itemId);
+                    
+                    // Update weight (subtract from old, will add to new)
+                    currentWeight -= weight;
+                    
+                    // Update score if item was correctly placed in old compartment
+                    const correctCompartment = correctPlacements[itemId];
+                    if (oldCompartment === correctCompartment) {
+                        currentScore -= 20;
+                        if (currentScore < 0) currentScore = 0;
+                        updateSafetyScore(currentScore);
+                    }
+                    
+                    // Show placeholder if old compartment is now empty
+                    if (packedItems[oldCompartment].length === 0) {
+                        oldCompartmentElement.classList.remove('has-items');
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'compartment-placeholder';
+                        placeholder.setAttribute('data-i18n', 'dragItemsHere');
+                        placeholder.textContent = getText('dragItemsHere');
+                        oldCompartmentContent.appendChild(placeholder);
+                    }
+                } else {
+                    // Item not found in old compartment - might have been removed already
+                    console.warn('Item not found in old compartment:', itemId);
+                    // Restore weight since we're not actually moving
+                    currentWeight += weight;
+                    return;
+                }
+            } else {
+                // Item is coming from the items list
+                const itemsList = document.getElementById('itemsList');
+                const itemElement = itemsList ? itemsList.querySelector(`.packing-item[data-item="${itemId}"]`) : null;
+                if (itemElement) {
+                    itemElement.remove();
+                    console.log('Removed item from list:', itemId);
+                } else {
+                    // Item not found in list - check if it's already placed
+                    const existingPlaced = document.querySelector(`.compartment-item[data-item="${itemId}"]`);
+                    if (existingPlaced) {
+                        console.log('Item already placed, skipping');
+                        return;
+                    }
+                    console.warn('Item not found in list and not placed:', itemId);
+                    // Don't return - continue to place the item anyway
+                }
+                
+                // Check weight limit (only if adding a NEW item, not when moving)
+                if (currentWeight + weight > maxWeight) {
+                    showDialog('錯誤!', '這太重了!走佬袋原則是輕便(≤1.5kg),逃生不應帶書。', 'error');
+                    // Restore item to list
+                    const category = correctPlacements[itemId] || 'middle';
+                    const restoredItem = createItemElement(itemId, weight, category);
+                    document.getElementById('itemsList').appendChild(restoredItem);
+                    attachDragHandlers(restoredItem);
+                    return;
+                }
+            }
+            
+            // Get the compartment content div (use existing reference or find it)
+            if (!compartmentContent) {
+                compartmentContent = compartmentElement.querySelector('.compartment-content');
+            }
+            
+            if (!compartmentContent) {
+                console.error('Could not find compartment content element');
+                return;
+            }
+            
+            // Remove drag-over class
+            compartmentContent.classList.remove('drag-over');
+            
+            // Restore opacity for all items
+            document.querySelectorAll('.packing-item').forEach(i => {
+                i.style.opacity = '1';
+            });
+            
+            // Remove placeholder if exists
+            const placeholder = compartmentContent.querySelector('.compartment-placeholder');
+            if (placeholder) {
+                placeholder.remove();
+            }
+            
+            // Create and add the item
+            try {
+                const newItem = createCompartmentItem(itemId, weight);
+                if (!newItem) {
+                    console.error('Failed to create compartment item');
+                    return false;
+                }
+                
+                newItem.setAttribute('data-compartment', newCompartment);
+                newItem.draggable = true;
+                
+                // Remove any existing drag handlers and reattach
+                if (window.dragFromCompartment) {
+                    newItem.removeEventListener('dragstart', window.dragFromCompartment);
+                    newItem.addEventListener('dragstart', window.dragFromCompartment);
+                }
+                
+                // Append to compartment
+                compartmentContent.appendChild(newItem);
+                
+                console.log('✅ SUCCESS: Item created and appended:', itemId, 'into compartment:', newCompartment);
+                console.log('Compartment content now has', compartmentContent.children.length, 'children');
+                
+            } catch (error) {
+                console.error('ERROR creating/adding item:', error);
+                alert('Error placing item: ' + error.message);
+                return false;
+            }
+            
+            // Add visual feedback that compartment has items
+            compartmentElement.classList.add('has-items');
+            console.log('Added has-items class to compartment');
+
+            // Update weight and packed items
+            currentWeight += weight;
+            packedItems[newCompartment].push({id: itemId, weight: weight});
+            console.log('Updated weight:', currentWeight, 'Packed items:', packedItems);
+            
+            updateWeightDisplay();
+            updateCompletion();
+            
+            // Force a reflow to ensure display
+            compartmentContent.offsetHeight;
+            
+            // Check if placement is correct and update score
+            const correctCompartment = correctPlacements[itemId];
+            if (newCompartment === correctCompartment) {
+                // Correct placement - add 20 points (20% per item)
+                currentScore += 20;
+                // Cap at 100
+                if (currentScore > 100) currentScore = 100;
+                updateSafetyScore(currentScore);
+                showDialog('正確', placementExplanations[itemId].correct, 'success');
+            } else {
+                // Incorrect placement - show error but keep item (no points)
+                showDialog('錯誤', placementExplanations[itemId].incorrect, 'error');
+            }
+
+            // Check if all items are placed and ALL are correctly placed
+            const totalPacked = Object.values(packedItems).reduce((sum, arr) => sum + arr.length, 0);
+            // Only check the 5 items that are actually in the UI
+            const requiredItems = ['wet-towel', 'smoke-mask', 'phone-powerbank', 'keys-documents', 'first-aid'];
+            
+            if (totalPacked >= 5) {
+                // Check if ALL 5 required items are correctly placed
+                let allCorrect = true;
+                let correctCount = 0;
+                
+                requiredItems.forEach(checkItemId => {
+                    const correctComp = correctPlacements[checkItemId];
+                    const itemInComp = packedItems[correctComp].find(item => item.id === checkItemId);
+                    if (itemInComp) {
+                        correctCount++;
+                    } else {
+                        allCorrect = false;
+                    }
+                });
+                
+                // If ALL 5 items are correctly placed, IMMEDIATELY show completion screen
+                if (allCorrect && correctCount === 5) {
+                    currentScore = 100;
+                    updateSafetyScore(100);
+                    
+                    // Save all progress data
+                    let attempts = parseInt(localStorage.getItem('bagAttempts') || '0');
+                    let bestScore = parseInt(localStorage.getItem('bagBestScore') || '0');
+                    
+                    // Increment attempts
+                    attempts += 1;
+                    
+                    // Update best score if current is higher
+                    if (currentScore > bestScore) {
+                        bestScore = currentScore;
+                    }
+                    
+                    // Save all data to localStorage
+                    localStorage.setItem('bagTrainingCompletion', '100');
+                    localStorage.setItem('bagAttempts', attempts.toString());
+                    localStorage.setItem('bagBestScore', bestScore.toString());
+                    
+                    // Save progress using shared function
+                    if (typeof saveProgress === 'function') {
+                        saveProgress();
+                    }
+                    
+                    // Show completion screen after brief delay to show success dialog
+                    setTimeout(() => {
+                        showCompletionScreen(100);
+                    }, 800);
+                    return; // Exit early
+                }
+            }
+        };
+
+
+        // Function to attach drag handlers to items
+        function attachDragHandlers(item) {
+            // Remove any existing handlers first
+            item.removeAttribute('ondragstart');
+            item.removeEventListener('dragstart', window.handleDragStart);
+            // Attach the handlers
+            item.addEventListener('dragstart', window.handleDragStart);
+            item.addEventListener('dragend', function(ev) {
+                // Restore opacity and cursor for all items
+                document.querySelectorAll('.packing-item').forEach(i => {
+                    i.style.opacity = '1';
+                    i.style.cursor = 'grab';
+                });
+                console.log('Drag ended');
+            });
+            // Ensure draggable is set
+            item.draggable = true;
+            item.style.cursor = 'grab';
+        }
+
+        // Make items draggable
+        document.addEventListener('DOMContentLoaded', () => {
+            // Ensure functions are available
+            console.log('DOMContentLoaded - Setting up drag handlers');
+            console.log('handleDragStart available:', typeof window.handleDragStart);
+            console.log('drop available:', typeof window.drop);
+            console.log('allowDrop available:', typeof window.allowDrop);
+            
+            const items = document.querySelectorAll('.packing-item');
+            console.log('Found items:', items.length);
+            items.forEach(item => {
+                attachDragHandlers(item);
+                console.log('Attached handler to:', item.dataset.item);
+            });
+
+            // Allow dropping back to items list
+            const itemsList = document.getElementById('itemsList');
+            if (itemsList) {
+                itemsList.addEventListener('dragover', window.allowDrop);
+                itemsList.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const itemId = e.dataTransfer.getData("text");
+                    const weight = parseFloat(e.dataTransfer.getData("weight"));
+                    const compartment = e.dataTransfer.getData("compartment");
+                    const action = e.dataTransfer.getData("action");
+
+                    if (action === "remove") {
+                        const itemElement = document.querySelector(`.compartment-item[data-item="${itemId}"][data-compartment="${compartment}"]`);
+                        if (itemElement) {
+                            const compartmentElement = itemElement.closest('.compartment');
+                            const compartmentContent = compartmentElement.querySelector('.compartment-content');
+                            itemElement.remove();
+                            currentWeight -= weight;
+                            packedItems[compartment] = packedItems[compartment].filter(item => item.id !== itemId);
+                            updateWeightDisplay();
+                            
+                            // Decrease score if item was correctly placed
+                            const correctCompartment = correctPlacements[itemId];
+                            if (compartment === correctCompartment && currentScore >= 20) {
+                                currentScore -= 20;
+                                // Ensure score doesn't go below 0
+                                if (currentScore < 0) currentScore = 0;
+                                updateSafetyScore(currentScore);
+                            }
+                            
+                            // Add placeholder back if compartment is empty
+                            if (compartmentElement) {
+                                const remainingItems = compartmentElement.querySelectorAll('.compartment-item');
+                                if (remainingItems.length === 0) {
+                                    compartmentElement.classList.remove('has-items');
+                                    const placeholder = document.createElement('div');
+                                    placeholder.className = 'compartment-placeholder';
+                                    placeholder.textContent = 'Drag items here';
+                                    compartmentContent.appendChild(placeholder);
+                                }
+                            }
+                            
+                            // Re-add to items list
+                            const completionStatus = document.getElementById('completionStatus');
+                            itemsList.style.display = 'block';
+                            if (completionStatus) completionStatus.style.display = 'none';
+                            const category = correctPlacements[itemId] || 'middle';
+                            const originalItem = createItemElement(itemId, weight, category);
+                            itemsList.appendChild(originalItem);
+                            attachDragHandlers(originalItem);
+                            updateCompletion();
+                        }
+                    }
+                });
+            }
+
+            loadProgress();
+        });
+
+        function restartBagTraining() {
+            // Reset all variables
+            currentWeight = 0;
+            currentScore = 0;
+            packedItems.top = [];
+            packedItems.middle = [];
+            packedItems.side = [];
+            
+            // Hide completion screen
+            document.getElementById('completionScreen').style.display = 'none';
+            
+            // Show main content
+            document.querySelector('.main-content').style.display = 'block';
+            
+            // Reset UI
+            updateWeightDisplay();
+            updateSafetyScore(0);
+            updateCompletion();
+            
+            // Reload items
+            const itemsList = document.getElementById('itemsList');
+            itemsList.innerHTML = '';
+            
+            // Recreate all items
+            const items = [
+                {id: 'wet-towel', weight: 0.2, category: 'top'},
+                {id: 'smoke-mask', weight: 0.1, category: 'top'},
+                {id: 'phone-powerbank', weight: 0.4, category: 'middle'},
+                {id: 'keys-documents', weight: 0.1, category: 'middle'},
+                {id: 'first-aid', weight: 0.2, category: 'side'}
+            ];
+            
+            items.forEach(item => {
+                const itemElement = createItemElement(item.id, item.weight, item.category);
+                itemsList.appendChild(itemElement);
+                attachDragHandlers(itemElement);
+            });
+            
+            // Reset compartments
+            ['top', 'middle', 'side'].forEach(comp => {
+                const compartment = document.getElementById(`compartment-${comp}`);
+                const content = compartment.querySelector('.compartment-content');
+                content.innerHTML = '<div class="compartment-placeholder">Drag items here</div>';
+                compartment.classList.remove('has-items');
+            });
+        }
+
+        function createItemElement(itemId, weight, category) {
+            const itemData = {
+                'wet-towel': {name: getText('wetTowel'), image: 'pic/towel.jpg'},
+                'smoke-mask': {name: getText('smokeMask'), image: 'pic/FIreMask.jpg'},
+                'phone-powerbank': {name: getText('phonePowerbank'), image: 'pic/powerBank.jpg'},
+                'keys-documents': {name: getText('keysDocuments'), image: 'pic/keys.jpg'},
+                'first-aid': {name: getText('firstAidMedicine'), image: 'pic/pills.jpg'},
+                'water-books': {name: 'Water/Books', image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=100&h=100&fit=crop'}
+            };
+
+            const div = document.createElement('div');
+            div.className = 'packing-item';
+            div.draggable = true;
+            div.dataset.item = itemId;
+            div.dataset.weight = weight;
+            div.dataset.category = category;
+            div.innerHTML = `
+                <img src="${itemData[itemId].image}" alt="${itemData[itemId].name}" class="item-image" onerror="this.style.display='none'">
+                <div class="item-content">
+                    <span class="item-name">${itemData[itemId].name}</span>
+                    <span class="item-weight">(${weight}kg)</span>
+                </div>
+            `;
+            div.addEventListener('dragstart', window.handleDragStart);
+            return div;
+        }
+
+        window.dragFromCompartment = function(ev) {
+            const item = ev.currentTarget || ev.target.closest('.compartment-item');
+            if (!item) return;
+            
+            const itemId = item.dataset.item;
+            const weight = parseFloat(item.dataset.weight);
+            const compartment = item.dataset.compartment || item.getAttribute('data-compartment');
+            const correctCompartment = correctPlacements[itemId] || '';
+            
+            // Set effectAllowed to allow moving
+            ev.dataTransfer.effectAllowed = "move";
+            
+            ev.dataTransfer.setData("text", itemId);
+            ev.dataTransfer.setData("weight", weight.toString());
+            ev.dataTransfer.setData("compartment", compartment || '');
+            ev.dataTransfer.setData("category", correctCompartment);
+            ev.dataTransfer.setData("action", "move");
+            
+            // Debug log
+            console.log('Dragging from compartment:', compartment, 'Item:', itemId);
+        };
+
+        function createCompartmentItem(itemId, weight) {
+            console.log('Creating compartment item:', itemId, weight);
+            
+            const itemData = {
+                'wet-towel': {name: (typeof getText !== 'undefined' ? getText('wetTowel') : 'Wet towel'), image: 'pic/towel.jpg'},
+                'smoke-mask': {name: (typeof getText !== 'undefined' ? getText('smokeMask') : 'Smoke mask'), image: 'pic/FIreMask.jpg'},
+                'phone-powerbank': {name: (typeof getText !== 'undefined' ? getText('phonePowerbank') : 'Phone/Power bank'), image: 'pic/powerBank.jpg'},
+                'keys-documents': {name: (typeof getText !== 'undefined' ? getText('keysDocuments') : 'Keys/Documents'), image: 'pic/keys.jpg'},
+                'first-aid': {name: (typeof getText !== 'undefined' ? getText('firstAidMedicine') : 'First aid medicine'), image: 'pic/pills.jpg'},
+                'water-books': {name: 'Water/Books', image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=100&h=100&fit=crop'}
+            };
+
+            if (!itemData[itemId]) {
+                console.error('Unknown item ID:', itemId);
+                return null;
+            }
+
+            const div = document.createElement('div');
+            div.className = 'compartment-item';
+            div.draggable = true;
+            div.dataset.item = itemId;
+            div.dataset.weight = weight;
+            
+            const itemInfo = itemData[itemId];
+            div.innerHTML = `
+                <img src="${itemInfo.image}" alt="${itemInfo.name}" class="compartment-item-image" onerror="this.style.display='none'">
+                <div class="compartment-item-content">
+                    <div class="compartment-item-name">${itemInfo.name}</div>
+                    <div class="compartment-item-weight">${weight}kg</div>
+                </div>
+            `;
+            
+            if (window.dragFromCompartment) {
+                div.addEventListener('dragstart', window.dragFromCompartment);
+            }
+            
+            console.log('Compartment item created successfully');
+            return div;
+        }
+
+        function updateWeightDisplay() {
+            const weightElement = document.getElementById('currentWeight');
+            const progressFill = document.getElementById('weightProgressFill');
+            
+            if (weightElement) {
+                weightElement.textContent = currentWeight.toFixed(1);
+            }
+            
+            // Update progress bar
+            if (progressFill) {
+                const percentage = Math.min((currentWeight / maxWeight) * 100, 100);
+                progressFill.style.width = percentage + '%';
+                
+                // Update color based on weight
+                if (currentWeight > maxWeight) {
+                    progressFill.style.backgroundColor = '#d32f2f';
+                    if (weightElement) weightElement.style.color = '#d32f2f';
+                } else if (currentWeight > maxWeight * 0.8) {
+                    progressFill.style.backgroundColor = '#f57c00';
+                    if (weightElement) weightElement.style.color = '#f57c00';
+                } else {
+                    progressFill.style.backgroundColor = '#2e7d32';
+                    if (weightElement) weightElement.style.color = '#2e7d32';
+                }
+            }
+        }
+
+        function updateCompletion() {
+            const totalItems = 5; // There are only 5 items, not 6
+            const packedCount = Object.values(packedItems).reduce((sum, arr) => sum + arr.length, 0);
+            const completion = Math.round((packedCount / totalItems) * 100);
+            const completionRateEl = document.getElementById('completionRate');
+            if (completionRateEl) {
+                completionRateEl.textContent = completion + '%';
+            }
+            localStorage.setItem('bagTrainingCompletion', completion);
+            
+            // Show/hide completion status
+            const itemsList = document.getElementById('itemsList');
+            const completionStatus = document.getElementById('completionStatus');
+            
+            // Always ensure items list exists and has items before hiding
+            if (itemsList) {
+                const itemCount = itemsList.querySelectorAll('.packing-item').length;
+                if (packedCount >= totalItems && itemCount === 0) {
+                    // All items packed AND no items in list - hide list
+                    itemsList.style.display = 'none';
+                    if (completionStatus) completionStatus.style.display = 'block';
+            } else {
+                itemsList.style.display = 'block';
+                if (completionStatus) completionStatus.style.display = 'none';
+            }
+            }
+            
+            // Enable/disable submit button
+            const submitButton = document.getElementById('submitButton');
+            if (packedCount === 5) {
+                submitButton.disabled = false;
+            } else {
+                submitButton.disabled = true;
+            }
+            
+            // Update safety score display
+            const safetyScore = parseInt(localStorage.getItem('safetyScore') || '0');
+            document.getElementById('safetyScoreLeft').textContent = safetyScore;
+        }
+
+        function showValidationMessage(message, type) {
+            const validationDiv = document.getElementById('validationMessage');
+            validationDiv.textContent = message;
+            validationDiv.className = `validation-message ${type}`;
+            setTimeout(() => {
+                validationDiv.textContent = '';
+                validationDiv.className = 'validation-message';
+            }, 3000);
+        }
+
+        function validateBag() {
+            let completion = parseInt(localStorage.getItem('bagTrainingCompletion') || '0');
+            let attempts = parseInt(localStorage.getItem('bagAttempts') || '0');
+            let bestScore = parseInt(localStorage.getItem('bagBestScore') || '0');
+
+            // Check weight
+            if (currentWeight > maxWeight) {
+                showDialog('錯誤', '這太重了!走佬袋原則是輕便(≤1.5kg),請調整物品。', 'error');
+                return;
+            }
+
+            // Calculate final score based on current score + bonuses
+            let finalScore = currentScore;
+
+            // Check if all items are packed correctly
+            const totalPacked = Object.values(packedItems).reduce((sum, arr) => sum + arr.length, 0);
+            if (totalPacked === 5 && currentWeight <= maxWeight) {
+                // Verify all items are in correct compartments
+                let allCorrect = true;
+                Object.keys(correctPlacements).forEach(itemId => {
+                    const correctCompartment = correctPlacements[itemId];
+                    const itemInCompartment = packedItems[correctCompartment].find(item => item.id === itemId);
+                    if (!itemInCompartment) {
+                        allCorrect = false;
+                    }
+                });
+
+                if (allCorrect) {
+                    // All items correctly placed - FORCE score to 100
+                    finalScore = 100;
+                    currentScore = 100;
+                    
+                    // Bonus points for correct critical items
+                    const topItems = packedItems.top.map(item => item.id);
+                    const hasTowel = topItems.includes('wet-towel');
+                    const hasMask = topItems.includes('smoke-mask');
+                    if (hasTowel && hasMask) {
+                        unlockBadge('distribution');
+                    }
+                    
+                    completion = 100;
+                    attempts += 1;
+                    if (finalScore > bestScore) {
+                        bestScore = finalScore;
+                    }
+                    localStorage.setItem('bagAttempts', attempts);
+                    localStorage.setItem('bagBestScore', bestScore);
+                    localStorage.setItem('bagTrainingCompletion', '100'); // Mark status to 100/100
+                    
+                    if (finalScore >= 80) {
+                        unlockBadge('achievement-unlocked');
+                    }
+                    if (finalScore === 100) {
+                        unlockBadge('perfect-escape');
+                    }
+
+                    // FORCE update score display to 100
+                    updateSafetyScore(100);
+
+                    // Show completion screen with 100
+                    showCompletionScreen(100);
+                } else {
+                    showDialog('錯誤', '請將所有5個物品放入正確的背包隔層。', 'error');
+                }
+            } else {
+                showDialog('錯誤', '請將所有5個物品放入背包隔層。', 'error');
+            }
+
+            updateCompletion();
+            saveProgress();
+        }
+
+        function showCompletionScreen(score) {
+            // Hide main content and show completion screen
+            const mainContent = document.querySelector('.main-content');
+            const completionScreen = document.getElementById('completionScreen');
+            
+            if (mainContent) mainContent.style.display = 'none';
+            if (completionScreen) {
+                completionScreen.style.display = 'flex';
+                completionScreen.style.position = 'fixed';
+                completionScreen.style.top = '0';
+                completionScreen.style.left = '0';
+                completionScreen.style.width = '100%';
+                completionScreen.style.height = '100%';
+                completionScreen.style.zIndex = '9999';
+                completionScreen.style.backgroundColor = 'rgba(255, 255, 255, 0.98)';
+            }
+            
+            // Update score and weight display
+            const finalScoreEl = document.getElementById('finalScore');
+            const finalWeightEl = document.getElementById('finalWeight');
+            if (finalScoreEl) finalScoreEl.textContent = score + '/100';
+            if (finalWeightEl) finalWeightEl.textContent = currentWeight.toFixed(1) + 'kg / 1.5kg';
+
+            // Update badges
+            if (score >= 80) {
+                const badge1 = document.getElementById('completionBadge1');
+                if (badge1) {
+                    badge1.classList.add('earned');
+                    const check = badge1.querySelector('.completion-badge-check');
+                    if (check) check.style.display = 'block';
+                }
+            }
+            const topItems = packedItems.top.map(item => item.id);
+            if (topItems.includes('wet-towel') && topItems.includes('smoke-mask')) {
+                const badge2 = document.getElementById('completionBadge2');
+                if (badge2) {
+                    badge2.classList.add('earned');
+                    const check = badge2.querySelector('.completion-badge-check');
+                    if (check) check.style.display = 'block';
+                }
+            }
+            if (score === 100) {
+                const badge4 = document.getElementById('completionBadge4');
+                if (badge4) {
+                    badge4.classList.add('earned');
+                    const check = badge4.querySelector('.completion-badge-check');
+                    if (check) check.style.display = 'block';
+                }
+            }
+
+            // Check if fire escape training is completed
+            const fireEscapeCompletion = parseInt(localStorage.getItem('fireEscapeCompletion') || '0');
+            const isFireEscapeCompleted = fireEscapeCompletion >= 100;
+            const redirectUrl = isFireEscapeCompleted ? 'index.html' : 'fire-escape.html';
+            const redirectText = isFireEscapeCompleted ? getText('backToHome') : getText('continueToFireEscape');
+
+            // Update redirect button
+            const redirectButton = document.getElementById('completionRedirectButton');
+            if (redirectButton) {
+                const buttonSpan = redirectButton.querySelector('span');
+                if (buttonSpan) {
+                    buttonSpan.textContent = redirectText;
+                } else {
+                    redirectButton.textContent = redirectText;
+                }
+                redirectButton.onclick = () => {
+                    window.location.href = redirectUrl;
+                };
+            }
+
+            // Auto-redirect removed - user stays on page to review results
+        }
+
+        function showDialog(title, message, type) {
+            const overlay = document.getElementById('dialogOverlay');
+            const modal = document.getElementById('dialogModal');
+            const dialogTitle = document.getElementById('dialogTitle');
+            const dialogContent = document.getElementById('dialogContent');
+            const dialogIcon = document.getElementById('dialogIcon');
+            const dialogHeader = document.getElementById('dialogHeader');
+
+            // Clear previous icon
+            dialogIcon.innerHTML = '';
+
+            if (type === 'success') {
+                modal.className = 'dialog-modal dialog-success';
+                dialogIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+                dialogTitle.textContent = '正確';
+                dialogTitle.className = 'dialog-title dialog-title-success';
+            } else if (type === 'error') {
+                modal.className = 'dialog-modal dialog-error';
+                dialogIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+                dialogTitle.textContent = '錯誤';
+                dialogTitle.className = 'dialog-title dialog-title-error';
+            }
+
+            // Format message with line breaks
+            const messageLines = message.split('\n');
+            dialogContent.innerHTML = messageLines.map(line => {
+                if (line.startsWith('正確!') || line.startsWith('錯誤!')) {
+                    return `<div class="dialog-message-main">${line}</div>`;
+                } else if (line.startsWith('原因:')) {
+                    return `<div class="dialog-message-reason">${line}</div>`;
+                } else {
+                    return `<div class="dialog-message-text">${line}</div>`;
+                }
+            }).join('');
+
+            overlay.style.display = 'flex';
+        }
+
+        function closeDialog() {
+            document.getElementById('dialogOverlay').style.display = 'none';
+        }
+
+        function updateSafetyScore(score) {
+            localStorage.setItem('safetyScore', score);
+            const safetyScoreLeft = document.getElementById('safetyScoreLeft');
+            if (safetyScoreLeft) {
+                safetyScoreLeft.textContent = score;
+                // Update color based on score
+                if (score === 0) {
+                    safetyScoreLeft.classList.add('score-zero');
+                    safetyScoreLeft.style.color = '#DC2626';
+                } else if (score >= 100) {
+                    safetyScoreLeft.classList.remove('score-zero');
+                    safetyScoreLeft.style.color = '#DC2626';
+                } else {
+                    safetyScoreLeft.classList.remove('score-zero');
+                    safetyScoreLeft.style.color = 'var(--orange-600)';
+                }
+            }
+        }
+
+        function loadProgress() {
+            const savedWeight = localStorage.getItem('bagCurrentWeight');
+            if (savedWeight) {
+                currentWeight = parseFloat(savedWeight);
+                updateWeightDisplay();
+            }
+            // Reset score to 0 when starting
+            currentScore = 0;
+            updateSafetyScore(0);
+            updateCompletion();
+        }
+    </script>
+</body>
+</html>
