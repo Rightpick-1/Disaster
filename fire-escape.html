@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire Escape Simulation - SilverCare Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="icons.css">
+    <script src="language.js"></script>
+</head>
+<body>
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper no-sidebar">
+        <!-- Platform Header -->
+        <header class="platform-header">
+            <h1 class="header-title" data-i18n="platformTitle">SilverCare Disaster Emergency Learning Platform</h1>
+            <div class="header-right">
+                <div class="language-switcher">
+                    <button class="language-button" onclick="setLanguage('en')" title="English">
+                        <span>EN</span>
+                    </button>
+                    <button class="language-button" onclick="setLanguage('zh_TW')" title="繁體中文">
+                        <span>繁</span>
+                    </button>
+                </div>
+                <button class="notification-button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <span class="notification-dot"></span>
+                </button>
+                <button class="user-button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Training Status Panel -->
+        <div class="status-panel">
+            <div class="status-item">
+                <span class="status-label" data-i18n="activeMode">Active Mode</span>
+                <span class="status-value mode-thunderstorm" data-i18n="thunderstormMode">Thunderstorm Mode</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label" data-i18n="currentActivity">Current Activity</span>
+                <span class="status-value" data-i18n="escapeSimulation">Escape Simulation</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label" data-i18n="networkTimer">Network Timer</span>
+                <span class="status-value timer" id="networkTimer">
+                    <svg class="timer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                    03:26
+                </span>
+            </div>
+            <div class="status-item">
+                <span class="status-label" data-i18n="completionProgress">Completion Progress</span>
+                <span class="status-value" id="completionProgress">0%</span>
+            </div>
+        </div>
+
+        <!-- Critical Warning Banner -->
+        <div class="warning-banner">
+            <span class="warning-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                </svg>
+            </span>
+            <span class="warning-text" data-i18n="elevatorWarning">Do not use elevators! Use stairs to escape!</span>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content fire-escape-content">
+            <!-- Progress Bar -->
+            <div class="question-progress-container">
+                <div class="question-progress-bar">
+                    <div class="question-progress-fill" id="questionProgressFill" style="width: 0%"></div>
+                </div>
+                <div class="question-progress-text" id="questionProgressText">Question 1 of 4</div>
+            </div>
+
+            <!-- Scenario Question -->
+            <div class="scenario-question-container">
+                <div class="scenario-number" id="scenarioNumber" data-i18n="scenario1of4">Scenario 1 of 4</div>
+                <p class="scenario-description" id="scenarioDescription">
+                    You are resting in your living room when you suddenly notice thick smoke coming from the kitchen. The fire is spreading. You need to make the right decision to protect your safety.
+                </p>
+            </div>
+
+            <!-- Feedback Message -->
+            <div class="feedback-message" id="scenarioFeedback" style="display: none;"></div>
+
+            <!-- Image and Choices Row -->
+            <div class="image-choices-row">
+                <!-- Scene Display -->
+                <div class="scene-container">
+                    <div class="scene-display">
+                        <img id="scenarioImage" src="pic/onfire_kitchen.png" alt="Fire Escape Scene" class="scene-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22400%22%3E%3Crect fill=%22%23f5f5f5%22 width=%22800%22 height=%22400%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23666%22 font-family=%22Arial%22 font-size=%2218%22%3EFire Escape Scenario%3C/text%3E%3C/svg%3E'">
+                    </div>
+                </div>
+
+                <!-- Decision Options -->
+                <div class="decision-options">
+                    <button class="decision-button decision-orange" id="option1" onclick="selectOption(0)">
+                        <span class="decision-text" id="option1Text">Immediately call 999 and prepare emergency bag</span>
+                    </button>
+                    <button class="decision-button decision-blue" id="option2" onclick="selectOption(1)">
+                        <span class="decision-text" id="option2Text">Go to the kitchen to check the fire and attempt to extinguish it</span>
+                    </button>
+                    <!-- Next Button -->
+                    <div class="next-button-container" id="nextButtonContainer" style="display: none;">
+                        <button class="next-scenario-button" onclick="nextScenario()" data-i18n="nextScenario">
+                            Next Scenario
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Hotline Display -->
+            <div class="hotline-display-inline">
+                <span class="hotline-label" data-i18n="emergencyHotline">Emergency Hotline</span>
+                <span class="hotline-number">999</span>
+            </div>
+
+            <!-- Bottom Sidebar -->
+            <div class="sidebar-column-bottom">
+                <!-- Safety Score -->
+                <div class="safety-score-card">
+                    <h3 class="card-title" data-i18n="safetyScore">Safety Score</h3>
+                    <div class="score-display">
+                        <span class="score-value" id="safetyScore">0</span>
+                        <span class="score-max">/100</span>
+                    </div>
+                    <div class="score-progress-bar">
+                        <div class="score-progress-fill" id="scoreProgressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Achievement Badges -->
+                <div class="achievement-badges-card">
+                    <h3 class="card-title" data-i18n="achievementBadges">Achievement Badges</h3>
+                    <div class="badges-list">
+                        <div class="badge-item-small locked" data-badge="achievement-unlocked">
+                            <span class="badge-name-small" data-i18n="achievementUnlocked">Achievement Unlocked</span>
+                        </div>
+                        <div class="badge-item-small locked" data-badge="distribution">
+                            <span class="badge-name-small" data-i18n="distributionQuestions">Distribution Questions</span>
+                        </div>
+                        <div class="badge-item-small locked" data-badge="quick-response">
+                            <span class="badge-name-small" data-i18n="quickResponse">Quick Response</span>
+                        </div>
+                        <div class="badge-item-small locked" data-badge="perfect-escape">
+                            <span class="badge-name-small" data-i18n="perfectEscape">Perfect Escape</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4-Week Training Program -->
+                <div class="training-program-card">
+                    <h3 class="card-title" data-i18n="fourWeekTrainingProgram">4-Week Training Program</h3>
+                    <div class="program-list">
+                        <div class="program-item" data-i18n="week1FireDetection">Week 1: Fire Detection</div>
+                        <div class="program-item current" data-i18n="week2EscapeRoutes">Week 2: Escape Routes (Current)</div>
+                        <div class="program-item" data-i18n="week3EmergencySupplies">Week 3: Emergency Supplies</div>
+                        <div class="program-item" data-i18n="week4FamilyPlanning">Week 4: Family Planning</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Completion Screen (Hidden by default) -->
+        <div class="completion-screen" id="completionScreen" style="display: none;">
+            <div class="completion-content">
+                <button class="back-link" onclick="window.location.href='index.html'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    <span data-i18n="backToHome">Back to Home</span>
+                </button>
+
+                <div class="completion-card">
+                    <div class="completion-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    <h2 class="completion-title" data-i18n="fireEscapeSimulationComplete">Fire Escape Simulation Complete!</h2>
+                    <div class="completion-stats">
+                        <div class="completion-stat">
+                            <span class="stat-label" data-i18n="finalScore">Final Score:</span>
+                            <span class="stat-value" id="finalScore">0/100</span>
+                        </div>
+                        <div class="completion-stat">
+                            <span class="stat-label" data-i18n="time">Time:</span>
+                            <span class="stat-value" id="finalTime">00:00</span>
+                        </div>
+                    </div>
+
+                    <!-- Achievement Badges -->
+                    <div class="completion-badges">
+                        <h3 class="completion-section-title" data-i18n="achievementBadges">Achievement Badges</h3>
+                        <div class="completion-badges-grid">
+                            <div class="completion-badge" id="completionBadge1">
+                                <div class="completion-badge-name" data-i18n="achievementUnlocked">Achievement Unlocked</div>
+                                <div class="completion-badge-check" style="display: none;">✓</div>
+                            </div>
+                            <div class="completion-badge" id="completionBadge2">
+                                <div class="completion-badge-name" data-i18n="distributionQuestions">Distribution Questions</div>
+                                <div class="completion-badge-check" style="display: none;">✓</div>
+                            </div>
+                            <div class="completion-badge" id="completionBadge3">
+                                <div class="completion-badge-name" data-i18n="quickResponse">Quick Response</div>
+                                <div class="completion-badge-check" style="display: none;">✓</div>
+                            </div>
+                            <div class="completion-badge" id="completionBadge4">
+                                <div class="completion-badge-name" data-i18n="perfectEscape">Perfect Escape</div>
+                                <div class="completion-badge-check" style="display: none;">✓</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="completion-actions">
+                        <button class="completion-button secondary" onclick="restartSimulation()" data-i18n="tryAgain">
+                            Try Again
+                        </button>
+                        <button class="completion-button primary" onclick="window.location.href='index.html'">
+                            <span data-i18n="backToHome">Back to Home</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Fire Escape Simulation Data
+        function getScenarios() {
+            return [
+                {
+                    id: 1,
+                    image: 'pic/onfire_kitchen.png',
+                    description: getText('scenario1Description'),
+                    options: [
+                        { text: getText('scenario1Option1'), correct: true, points: 25 },
+                        { text: getText('scenario1Option2'), correct: false, points: 0 }
+                    ],
+                    feedback: {
+                        correct: getText('scenario1FeedbackCorrect'),
+                        incorrect: getText('scenario1FeedbackIncorrect')
+                    }
+                },
+                {
+                    id: 2,
+                    image: 'pic/door_fire.png',
+                    description: getText('scenario2Description'),
+                    options: [
+                        { text: getText('scenario2Option1'), correct: true, points: 25 },
+                        { text: getText('scenario2Option2'), correct: false, points: 0 }
+                    ],
+                    feedback: {
+                        correct: getText('scenario2FeedbackCorrect'),
+                        incorrect: getText('scenario2FeedbackIncorrect')
+                    }
+                },
+                {
+                    id: 3,
+                    image: 'pic/2wayout.png',
+                    description: getText('scenario3Description'),
+                    options: [
+                        { text: getText('scenario3Option1'), correct: true, points: 25 },
+                        { text: getText('scenario3Option2'), correct: false, points: 0 }
+                    ],
+                    feedback: {
+                        correct: getText('scenario3FeedbackCorrect'),
+                        incorrect: getText('scenario3FeedbackIncorrect')
+                    }
+                },
+                {
+                    id: 4,
+                    image: 'pic/sharpClothes.png',
+                    description: getText('scenario4Description'),
+                    options: [
+                        { text: getText('scenario4Option1'), correct: true, points: 25 },
+                        { text: getText('scenario4Option2'), correct: false, points: 0 }
+                    ],
+                    feedback: {
+                        correct: getText('scenario4FeedbackCorrect'),
+                        incorrect: getText('scenario4FeedbackIncorrect')
+                    }
+                }
+            ];
+        }
+        
+        let scenarios = getScenarios();
+
+        let currentScenarioIndex = 0;
+        let totalScore = 0;
+        let startTime = Date.now();
+        let timerInterval;
+        let timerSeconds = 206; // 03:26 in seconds
+
+        // Initialize
+        window.addEventListener('load', () => {
+            startTimer();
+            loadScenario(0);
+            loadProgress();
+        });
+        
+        // Reload scenarios when language changes
+        window.addEventListener('languageChanged', () => {
+            scenarios = getScenarios();
+            loadScenario(currentScenarioIndex);
+        });
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                updateTimer();
+            }, 1000);
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(timerSeconds / 60);
+            const seconds = timerSeconds % 60;
+            const timerElement = document.getElementById('networkTimer');
+            timerElement.innerHTML = `
+                <svg class="timer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+                ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}
+            `;
+        }
+
+        function loadScenario(index) {
+            if (index >= scenarios.length) {
+                showCompletion();
+                return;
+            }
+
+            const scenario = scenarios[index];
+            currentScenarioIndex = index;
+
+            // Update scenario number
+            document.getElementById('scenarioNumber').textContent = getText('scenario') + ` ${scenario.id} ` + getText('of') + ` 4`;
+
+            // Update image
+            document.getElementById('scenarioImage').src = scenario.image;
+
+            // Update description
+            document.getElementById('scenarioDescription').textContent = scenario.description;
+
+            // Update options
+            document.getElementById('option1Text').textContent = scenario.options[0].text;
+            document.getElementById('option2Text').textContent = scenario.options[1].text;
+
+            // Reset button states
+            document.getElementById('option1').className = 'decision-button decision-orange';
+            document.getElementById('option2').className = 'decision-button decision-blue';
+            document.getElementById('option1').disabled = false;
+            document.getElementById('option2').disabled = false;
+
+            // Hide feedback and next button
+            document.getElementById('scenarioFeedback').style.display = 'none';
+            document.getElementById('nextButtonContainer').style.display = 'none';
+
+            // Update completion progress
+            const progress = Math.round(((index + 1) / scenarios.length) * 100);
+            document.getElementById('completionProgress').textContent = progress + '%';
+            
+            // Update question progress bar
+            const questionProgress = Math.round(((index + 1) / scenarios.length) * 100);
+            document.getElementById('questionProgressFill').style.width = questionProgress + '%';
+            document.getElementById('questionProgressText').textContent = `Question ${index + 1} of ${scenarios.length}`;
+        }
+
+        function selectOption(optionIndex) {
+            const scenario = scenarios[currentScenarioIndex];
+            const selectedOption = scenario.options[optionIndex];
+            const feedbackDiv = document.getElementById('scenarioFeedback');
+            const option1 = document.getElementById('option1');
+            const option2 = document.getElementById('option2');
+
+            // Disable buttons
+            option1.disabled = true;
+            option2.disabled = true;
+
+            // Update score
+            if (selectedOption.correct) {
+                totalScore += selectedOption.points;
+                feedbackDiv.textContent = '✓ ' + scenario.feedback.correct;
+                feedbackDiv.className = 'feedback-message success';
+                option1.className = selectedOption === scenario.options[0] 
+                    ? 'decision-button decision-green' 
+                    : 'decision-button decision-orange';
+                option2.className = selectedOption === scenario.options[1] 
+                    ? 'decision-button decision-green' 
+                    : 'decision-button decision-blue';
+            } else {
+                feedbackDiv.textContent = '✗ ' + scenario.feedback.incorrect;
+                feedbackDiv.className = 'feedback-message error';
+                option1.className = scenario.options[0].correct 
+                    ? 'decision-button decision-green' 
+                    : 'decision-button decision-orange';
+                option2.className = scenario.options[1].correct 
+                    ? 'decision-button decision-green' 
+                    : 'decision-button decision-blue';
+            }
+
+            feedbackDiv.style.display = 'block';
+            document.getElementById('nextButtonContainer').style.display = 'block';
+
+            // Update safety score
+            updateSafetyScore(totalScore);
+            updateScoreProgress(totalScore);
+
+            // Check for badges
+            checkBadges();
+        }
+
+        function nextScenario() {
+            if (currentScenarioIndex < scenarios.length - 1) {
+                loadScenario(currentScenarioIndex + 1);
+            } else {
+                showCompletion();
+            }
+        }
+
+        function showCompletion() {
+            clearInterval(timerInterval);
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsedTime / 60);
+            const seconds = elapsedTime % 60;
+
+            document.querySelector('.main-content').style.display = 'none';
+            document.getElementById('completionScreen').style.display = 'block';
+
+            document.getElementById('finalScore').textContent = totalScore + '/100';
+            document.getElementById('finalTime').textContent = 
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            // Update badges
+            if (totalScore >= 80) {
+                document.getElementById('completionBadge1').classList.add('earned');
+                document.getElementById('completionBadge1').querySelector('.completion-badge-check').style.display = 'block';
+            }
+            if (currentScenarioIndex >= 2) {
+                document.getElementById('completionBadge2').classList.add('earned');
+                document.getElementById('completionBadge2').querySelector('.completion-badge-check').style.display = 'block';
+            }
+            if (timerSeconds < 300) {
+                document.getElementById('completionBadge3').classList.add('earned');
+                document.getElementById('completionBadge3').querySelector('.completion-badge-check').style.display = 'block';
+            }
+            if (totalScore === 100) {
+                document.getElementById('completionBadge4').classList.add('earned');
+                document.getElementById('completionBadge4').querySelector('.completion-badge-check').style.display = 'block';
+            }
+
+            // Save progress
+            const completion = 100;
+            const attempts = parseInt(localStorage.getItem('fireEscapeAttempts') || '0') + 1;
+            const bestScore = Math.max(totalScore, parseInt(localStorage.getItem('fireEscapeBestScore') || '0'));
+
+            localStorage.setItem('fireEscapeCompletion', completion);
+            localStorage.setItem('fireEscapeAttempts', attempts);
+            localStorage.setItem('fireEscapeBestScore', bestScore);
+            updateSafetyScore(totalScore);
+            saveProgress();
+        }
+
+        function restartSimulation() {
+            currentScenarioIndex = 0;
+            totalScore = 0;
+            timerSeconds = 0;
+            startTime = Date.now();
+            document.querySelector('.main-content').style.display = 'block';
+            document.getElementById('completionScreen').style.display = 'none';
+            startTimer();
+            loadScenario(0);
+            updateSafetyScore(0);
+            updateScoreProgress(0);
+        }
+
+        function updateSafetyScore(score) {
+            document.getElementById('safetyScore').textContent = score;
+        }
+
+        function updateScoreProgress(score) {
+            document.getElementById('scoreProgressFill').style.width = score + '%';
+        }
+
+        function checkBadges() {
+            if (totalScore >= 80) {
+                unlockBadge('achievement-unlocked');
+            }
+            if (currentScenarioIndex >= 2) {
+                unlockBadge('distribution');
+            }
+            if (timerSeconds < 300) {
+                unlockBadge('quick-response');
+            }
+        }
+
+        function loadProgress() {
+            const score = getSafetyScore();
+            updateSafetyScore(score);
+            updateScoreProgress(score);
+        }
+    </script>
+</body>
+</html>
