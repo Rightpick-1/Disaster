@@ -1,0 +1,4 @@
+url: "https://silvercare.hk"          
+permalink: pretty              
+permalink_style: pretty
+include: [".html"]
