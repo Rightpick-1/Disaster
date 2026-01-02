@@ -98,14 +98,14 @@
 
             <!-- Image and Choices Row -->
             <div class="image-choices-row">
-                <!-- Scene Display -->
+                <!-- Center Scene Display -->
                 <div class="scene-container">
                     <div class="scene-display">
                         <img id="scenarioImage" src="pic/onfire_kitchen.png" alt="Fire Escape Scene" class="scene-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22400%22%3E%3Crect fill=%22%23f5f5f5%22 width=%22800%22 height=%22400%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23666%22 font-family=%22Arial%22 font-size=%2218%22%3EFire Escape Scenario%3C/text%3E%3C/svg%3E'">
                     </div>
                 </div>
 
-                <!-- Decision Options -->
+                <!-- Decision Options (centered below image) -->
                 <div class="decision-options">
                     <button class="decision-button decision-orange" id="option1" onclick="selectOption(0)">
                         <span class="decision-text" id="option1Text">Immediately call 999 and prepare emergency bag</span>
@@ -113,12 +113,12 @@
                     <button class="decision-button decision-blue" id="option2" onclick="selectOption(1)">
                         <span class="decision-text" id="option2Text">Go to the kitchen to check the fire and attempt to extinguish it</span>
                     </button>
-                    <!-- Next Button -->
-                    <div class="next-button-container" id="nextButtonContainer" style="display: none;">
+                </div>
+                <!-- Next Button (below options) -->
+                <div class="next-button-container" id="nextButtonContainer" style="display: none; ">
                         <button class="next-scenario-button" onclick="nextScenario()" data-i18n="nextScenario">
                             Next Scenario
                         </button>
-                    </div>
                 </div>
             </div>
 
@@ -389,31 +389,47 @@
             const option1 = document.getElementById('option1');
             const option2 = document.getElementById('option2');
 
+            // Change the scene image immediately based on current scenario
+            const sceneImg = document.getElementById('scenarioImage');
+            switch (currentScenarioIndex) {
+                case 0:
+                    sceneImg.src = 'pic/calling_999.png';
+                    break;
+                case 1:
+                    sceneImg.src = 'pic/touching_doorknob.png';
+                    break;
+                case 2:
+                    sceneImg.src = 'pic/running_towards_the_light.png';
+                    break;
+                case 3:
+                    sceneImg.src = 'pic/waving_colored.png';
+                    break;
+                default:
+                    break;
+            }
+
             // Disable buttons
             option1.disabled = true;
             option2.disabled = true;
 
             // Update score
+            // Show correct option in green and incorrect option in red
             if (selectedOption.correct) {
                 totalScore += selectedOption.points;
                 feedbackDiv.textContent = '✓ ' + scenario.feedback.correct;
                 feedbackDiv.className = 'feedback-message success';
-                option1.className = selectedOption === scenario.options[0] 
-                    ? 'decision-button decision-green' 
-                    : 'decision-button decision-orange';
-                option2.className = selectedOption === scenario.options[1] 
-                    ? 'decision-button decision-green' 
-                    : 'decision-button decision-blue';
             } else {
                 feedbackDiv.textContent = '✗ ' + scenario.feedback.incorrect;
                 feedbackDiv.className = 'feedback-message error';
-                option1.className = scenario.options[0].correct 
-                    ? 'decision-button decision-green' 
-                    : 'decision-button decision-orange';
-                option2.className = scenario.options[1].correct 
-                    ? 'decision-button decision-green' 
-                    : 'decision-button decision-blue';
             }
+
+            // Apply green to the correct option and red to the incorrect one
+            option1.className = scenario.options[0].correct
+                ? 'decision-button decision-green'
+                : 'decision-button decision-red';
+            option2.className = scenario.options[1].correct
+                ? 'decision-button decision-green'
+                : 'decision-button decision-red';
 
             feedbackDiv.style.display = 'block';
             document.getElementById('nextButtonContainer').style.display = 'block';
