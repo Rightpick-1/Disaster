@@ -302,6 +302,7 @@
         let scenarios = getScenarios();
 
         let currentScenarioIndex = 0;
+        let completedScenarios = 0;
         let totalScore = 0;
         let startTime = Date.now();
         let timerInterval;
@@ -311,7 +312,12 @@
         window.addEventListener('load', () => {
             startTimer();
             loadScenario(0);
-            loadProgress();
+            // Ensure initial safety score and progress displays start at 0
+            updateSafetyScore(0);
+            const scoreFill = document.getElementById('scoreProgressFill');
+            if (scoreFill) scoreFill.style.width = '0%';
+            const completionEl = document.getElementById('completionProgress');
+            if (completionEl) completionEl.textContent = '0%';
         });
         
         // Reload scenarios when language changes
@@ -371,12 +377,8 @@
             // Hide feedback and next button
             document.getElementById('scenarioFeedback').style.display = 'none';
             document.getElementById('nextButtonContainer').style.display = 'none';
-
-            // Update completion progress
-            const progress = Math.round(((index + 1) / scenarios.length) * 100);
-            document.getElementById('completionProgress').textContent = progress + '%';
             
-            // Update question progress bar
+            // Update question progress bar (based on current scenario number, not completion)
             const questionProgress = Math.round(((index + 1) / scenarios.length) * 100);
             document.getElementById('questionProgressFill').style.width = questionProgress + '%';
             document.getElementById('questionProgressText').textContent = `Question ${index + 1} of ${scenarios.length}`;
@@ -398,6 +400,7 @@
                 case 1:
                     sceneImg.src = 'pic/touching_doorknob.png';
                     break;
+                    
                 case 2:
                     sceneImg.src = 'pic/running_towards_the_light.png';
                     break;
@@ -434,9 +437,20 @@
             feedbackDiv.style.display = 'block';
             document.getElementById('nextButtonContainer').style.display = 'block';
 
+            // Update completion progress and safety score
+            completedScenarios++;
+            const completionProgress = Math.round((completedScenarios / scenarios.length) * 100);
+            document.getElementById('completionProgress').textContent = completionProgress + '%';
+            document.getElementById('scoreProgressFill').style.width = completionProgress + '%';
+
             // Update safety score
             updateSafetyScore(totalScore);
-            updateScoreProgress(totalScore);
+
+                // Change button text to "Finish" on last scenario
+                const nextButton = document.querySelector('.next-scenario-button');
+                if (currentScenarioIndex === scenarios.length - 1) {
+                    nextButton.textContent = getText('Finish')
+                }
 
             // Check for badges
             checkBadges();
@@ -495,6 +509,7 @@
 
         function restartSimulation() {
             currentScenarioIndex = 0;
+            completedScenarios = 0;
             totalScore = 0;
             timerSeconds = 0;
             startTime = Date.now();
@@ -503,7 +518,10 @@
             startTimer();
             loadScenario(0);
             updateSafetyScore(0);
-            updateScoreProgress(0);
+            document.getElementById('scoreProgressFill').style.width = '0%';
+            document.getElementById('completionProgress').textContent = '0%';
+                // Reset button text
+                document.querySelector('.next-scenario-button').textContent = getText('nextScenario') || 'Next Scenario';
         }
 
         function updateSafetyScore(score) {
