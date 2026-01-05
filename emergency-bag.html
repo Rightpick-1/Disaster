@@ -440,6 +440,9 @@
         let currentWeight = 0;
         const maxWeight = 1.5;
         let currentScore = 0; // Track score as items are placed
+        let isAutoMoving = false; // Flag to track if system is auto-moving item
+        let pendingAutoMove = null; // Store pending auto-move data
+        let correctlyPlacedItems = new Set(); // Track items placed correctly on first try
         const packedItems = {
             top: [],
             middle: [],
@@ -749,12 +752,27 @@
                 if (currentScore > 100) currentScore = 100;
                 updateSafetyScore(currentScore);
                 showDialog('正確', placementExplanations[itemId].correct, 'success');
+                                // Mark this item as correctly placed
+                                correctlyPlacedItems.add(itemId);
+                // Check for completion immediately after correct placement
+                checkAndShowCompletion();
             } else {
-                // Incorrect placement - show error but keep item (no points)
+                // Incorrect placement - show error message, then auto-move when user closes dialog
+                // Store the auto-move data to be executed when dialog closes
+                pendingAutoMove = {
+                    itemId: itemId,
+                    weight: weight,
+                    correctCompartment: correctCompartment,
+                    newCompartment: newCompartment,
+                    compartmentContent: compartmentContent
+                };
+                
                 showDialog('錯誤', placementExplanations[itemId].incorrect, 'error');
             }
+        };
 
-            // Check if all items are placed and ALL are correctly placed
+        // Helper function to check if all items are correctly placed and show completion if so
+        function checkAndShowCompletion() {
             const totalPacked = Object.values(packedItems).reduce((sum, arr) => sum + arr.length, 0);
             // Only check the 5 items that are actually in the UI
             const requiredItems = ['wet-towel', 'smoke-mask', 'phone-powerbank', 'keys-documents', 'first-aid'];
@@ -774,10 +792,14 @@
                     }
                 });
                 
-                // If ALL 5 items are correctly placed, IMMEDIATELY show completion screen
+                // If ALL 5 items are correctly placed, show completion screen
                 if (allCorrect && correctCount === 5) {
-                    currentScore = 100;
-                    updateSafetyScore(100);
+                    // Only set score to 100 if all items were placed correctly on first try
+                    // Otherwise keep the score based on correctly placed items
+                    if (correctlyPlacedItems.size === 5) {
+                        currentScore = 100;
+                    }
+                    updateSafetyScore(currentScore);
                     
                     // Save all progress data
                     let attempts = parseInt(localStorage.getItem('bagAttempts') || '0');
@@ -792,7 +814,7 @@
                     }
                     
                     // Save all data to localStorage
-                    localStorage.setItem('bagTrainingCompletion', '100');
+                    localStorage.setItem('bagTrainingCompletion', currentScore.toString());
                     localStorage.setItem('bagAttempts', attempts.toString());
                     localStorage.setItem('bagBestScore', bestScore.toString());
                     
@@ -803,11 +825,12 @@
                     
                     // Show completion screen after brief delay to show success dialog
                     setTimeout(() => {
-                        showCompletionScreen(100);
+                        showCompletionScreen(currentScore);
                     }, 800);
-                    return; // Exit early
+                    return true;
                 }
             }
+            return false;
         };
 
 
@@ -941,6 +964,8 @@
                 const itemElement = createItemElement(item.id, item.weight, item.category);
                 itemsList.appendChild(itemElement);
                 attachDragHandlers(itemElement);
+                        // Clear correctly placed items tracker
+                        correctlyPlacedItems.clear();
             });
             
             // Reset compartments
@@ -983,22 +1008,11 @@
             const item = ev.currentTarget || ev.target.closest('.compartment-item');
             if (!item) return;
             
-            const itemId = item.dataset.item;
-            const weight = parseFloat(item.dataset.weight);
-            const compartment = item.dataset.compartment || item.getAttribute('data-compartment');
-            const correctCompartment = correctPlacements[itemId] || '';
-            
-            // Set effectAllowed to allow moving
-            ev.dataTransfer.effectAllowed = "move";
-            
-            ev.dataTransfer.setData("text", itemId);
-            ev.dataTransfer.setData("weight", weight.toString());
-            ev.dataTransfer.setData("compartment", compartment || '');
-            ev.dataTransfer.setData("category", correctCompartment);
-            ev.dataTransfer.setData("action", "move");
-            
-            // Debug log
-            console.log('Dragging from compartment:', compartment, 'Item:', itemId);
+            // PREVENT dragging from compartments - items are locked once placed
+            ev.preventDefault();
+            ev.stopPropagation();
+            console.log('Dragging from compartments is disabled - items are locked once placed');
+            return false;
         };
 
         function createCompartmentItem(itemId, weight) {
@@ -1103,6 +1117,43 @@
                 submitButton.disabled = true;
             }
             
+            // Check if all items are correctly placed and weight is within limit
+            if (packedCount === 5 && currentWeight <= maxWeight) {
+                let allCorrect = true;
+                Object.keys(correctPlacements).forEach(itemId => {
+                    const correctCompartment = correctPlacements[itemId];
+                    const itemInCompartment = packedItems[correctCompartment].find(item => item.id === itemId);
+                    if (!itemInCompartment) {
+                        allCorrect = false;
+                    }
+                });
+                
+                // If all items are correctly placed, automatically show completion screen
+                if (allCorrect) {
+                    currentScore = 100;
+                    updateSafetyScore(100);
+                    
+                    // Update localStorage
+                    localStorage.setItem('bagTrainingCompletion', '100');
+                    localStorage.setItem('bagBestScore', Math.max(100, parseInt(localStorage.getItem('bagBestScore') || '0')));
+                    localStorage.setItem('bagAttempts', parseInt(localStorage.getItem('bagAttempts') || '0') + 1);
+                    
+                    // Unlock badges
+                    unlockBadge('achievement-unlocked');
+                    unlockBadge('perfect-escape');
+                    const topItems = packedItems.top.map(item => item.id);
+                    if (topItems.includes('wet-towel') && topItems.includes('smoke-mask')) {
+                        unlockBadge('distribution');
+                    }
+                    
+                    // Automatically show completion screen after a brief delay
+                    setTimeout(() => {
+                        showCompletionScreen(100);
+                    }, 500);
+                    return;
+                }
+            }
+            
             // Update safety score display
             const safetyScore = parseInt(localStorage.getItem('safetyScore') || '0');
             document.getElementById('safetyScoreLeft').textContent = safetyScore;
@@ -1146,9 +1197,8 @@
                 });
 
                 if (allCorrect) {
-                    // All items correctly placed - FORCE score to 100
-                    finalScore = 100;
-                    currentScore = 100;
+                    // Use actual current score based on correct placements
+                    finalScore = currentScore;
                     
                     // Bonus points for correct critical items
                     const topItems = packedItems.top.map(item => item.id);
@@ -1158,14 +1208,14 @@
                         unlockBadge('distribution');
                     }
                     
-                    completion = 100;
+                    completion = finalScore;
                     attempts += 1;
                     if (finalScore > bestScore) {
                         bestScore = finalScore;
                     }
                     localStorage.setItem('bagAttempts', attempts);
                     localStorage.setItem('bagBestScore', bestScore);
-                    localStorage.setItem('bagTrainingCompletion', '100'); // Mark status to 100/100
+                    localStorage.setItem('bagTrainingCompletion', finalScore.toString()); // Save actual score
                     
                     if (finalScore >= 80) {
                         unlockBadge('achievement-unlocked');
@@ -1174,11 +1224,11 @@
                         unlockBadge('perfect-escape');
                     }
 
-                    // FORCE update score display to 100
-                    updateSafetyScore(100);
+                    // Update score display with actual score
+                    updateSafetyScore(finalScore);
 
-                    // Show completion screen with 100
-                    showCompletionScreen(100);
+                    // Show completion screen with actual score
+                    showCompletionScreen(finalScore);
                 } else {
                     showDialog('錯誤', '請將所有5個物品放入正確的背包隔層。', 'error');
                 }
@@ -1303,6 +1353,55 @@
 
         function closeDialog() {
             document.getElementById('dialogOverlay').style.display = 'none';
+            
+            // Execute pending auto-move if there is one
+            if (pendingAutoMove) {
+                const move = pendingAutoMove;
+                pendingAutoMove = null; // Clear the pending move
+                
+                console.log('Auto-moving item to correct compartment:', move.correctCompartment);
+                isAutoMoving = true; // Set flag to prevent score updates
+                
+                // Remove item from wrong compartment
+                const itemElement = move.compartmentContent.querySelector(`[data-item="${move.itemId}"]`);
+                if (itemElement) {
+                    itemElement.remove();
+                    console.log('Removed item from wrong compartment:', move.newCompartment);
+                }
+                
+                // Remove from packedItems wrong compartment
+                packedItems[move.newCompartment] = packedItems[move.newCompartment].filter(item => item.id !== move.itemId);
+                currentWeight -= move.weight;
+                
+                // Add to correct compartment
+                const correctCompartmentElement = document.getElementById(`compartment-${move.correctCompartment}`);
+                const correctCompartmentContent = correctCompartmentElement.querySelector('.compartment-content');
+                
+                // Create new item element for correct compartment
+                const newCorrectItem = createCompartmentItem(move.itemId, move.weight);
+                newCorrectItem.setAttribute('data-compartment', move.correctCompartment);
+                newCorrectItem.draggable = true;
+                correctCompartmentContent.appendChild(newCorrectItem);
+                
+                // Update packedItems
+                packedItems[move.correctCompartment].push({id: move.itemId, weight: move.weight});
+                currentWeight += move.weight;
+                
+                // Mark correct compartment as having items
+                correctCompartmentElement.classList.add('has-items');
+                
+                // Update displays without changing score (no points added for auto-move)
+                updateWeightDisplay();
+                updateCompletion();
+                
+                // Show success message after auto-move
+                showDialog('自動排序完成', placementExplanations[move.itemId].correct, 'success');
+                
+                isAutoMoving = false; // Reset flag
+                
+                // Check for completion after auto-move
+                checkAndShowCompletion();
+            }
         }
 
         function updateSafetyScore(score) {
