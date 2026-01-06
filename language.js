@@ -73,7 +73,7 @@ const translations = {
         unlocked: "Unlocked",
         tryAgain: "Try Again",
         continueToFireEscape: "Continue to Fire Escape Training",
-        placeAllItemsToContinue: "Place all items to continue",
+        backToHome: "Back to Home",
         voice: "Voice",
         pointer: "Pointer",
         
@@ -150,7 +150,7 @@ const translations = {
         english: "English",
         traditionalChinese: "繁體中文",
         
-        // Kiosk Interface
+        // Kiosk Interfacye
         welcomeToTraining: "Welcome to Disaster Emergency Training",
         selectTrainingModule: "Select a training module to begin",
         
@@ -161,7 +161,56 @@ const translations = {
         trainingStatus: "Training Status",
         complete: "Complete",
         inProgress: "In Progress",
-        notStarted: "Not Started"
+        notStarted: "Not Started",
+
+        question: "Question",
+        finish: "Finish",
+
+        // Dialog messages for emergency bag training
+        correctPlacement: "Correct Placement",
+        autoSortingComplete: "Auto-sorting complete",
+        tooHeavyAlert: "Too heavy! Emergency bag principle is light (≤1.5kg), should not carry books when escaping.",
+        adjustItems: "Too heavy! Emergency bag principle is light (≤1.5kg), please adjust items.",
+        allItemsCorrect: "Please place all 5 items into the correct backpack compartments.",
+        placeAllItems: "Please place all items into the backpack compartments.",
+        incorrectPlacement: "Incorrect Placement",
+
+        // Item-specific explanations (correct)
+        correctTowelMask: "Correct!\nProtects respiratory tract, needs immediate access, please place on top layer.",
+        correctSmokeMask: "Correct!\nProtects respiratory tract, needs immediate access, please place on top layer.",
+        correctPhone: "Correct!\nPhone is valuable and relatively heavy, placed in middle layer for safest protection.",
+        correctKeys: "Correct!\nImportant documents and keys should be placed in the middle main layer to prevent dropping.",
+        correctFirstAid: "Correct!\nMedicine is small and easily lost, should be placed separately in side pocket for easy finding.",
+        correctWaterBooks: "Correct!\nWater is heavy, should be placed in middle layer.",
+
+        // Item-specific explanations (incorrect)
+        incorrectTowelMask: "Incorrect!\nWrong position! Should be placed on top layer.\nReason: Need to use immediately during evacuation (cover mouth and nose), must be placed in the top layer for easy access!",
+        incorrectSmokeMask: "Incorrect!\nWrong position! Should be placed on top layer.\nReason: Need to use immediately during evacuation (cover mouth and nose), must be placed in the top layer for easy access!",
+        incorrectPhone: "Incorrect!\nWrong position! Should be placed in middle layer.\nReason: Phone is valuable and relatively heavy, placed in middle layer for safest protection.",
+        incorrectKeys: "Incorrect!\nWrong position! Should be placed in middle layer.\nReason: Important documents and keys should be placed in the middle main layer to prevent dropping.",
+        incorrectFirstAid: "Incorrect!\nWrong position! Should be placed in side pocket.\nReason: Medicine is small and easily lost, should be placed separately in side pocket for easy finding.",
+        incorrectWaterBooks: "Incorrect!\nToo heavy! Emergency bag principle is light (≤1.5kg), should not carry books when escaping.",
+        tooHeavyBooks: "Too heavy! Emergency bag principle is light (≤1.5kg), should not carry books when escaping.",
+        
+        // New words to translate
+        Status: "Status",
+        Finish: "Finish",
+        Question: "Question",
+
+        confirm: "Confirm",
+        allItemsPlaced: "All items placed",
+        prepare: "Prepare",
+        alerts: "Alerts",
+        advice: "Advice",
+
+        // Case-safe UI words
+        Question: "Question",
+        Status: "Status",
+        Finish: "Finish",
+        question: "Question",
+        status: "Status",
+        finish: "Finish"
+
     },
     zh_TW: {
         // Navigation
@@ -325,7 +374,53 @@ const translations = {
         trainingStatus: "訓練狀態",
         complete: "已完成",
         inProgress: "進行中",
-        notStarted: "尚未開始"
+        notStarted: "尚未開始",
+
+        question: "問題",
+        finish: "完成",
+
+        // Dialog messages for emergency bag training
+        correctPlacement: "正確放置",
+        autoSortingComplete: "自動排序完成",
+        tooHeavyAlert: "這太重了!走佬袋原則是輕便(≤1.5kg),逃生不應帶書。",
+        adjustItems: "這太重了!走佬袋原則是輕便(≤1.5kg),請調整物品。",
+        allItemsCorrect: "請將所有5個物品放入正確的背包隔層。",
+        placeAllItems: "請將所有物品放入背包隔層。",
+        incorrectPlacement: "錯誤放置",
+
+        // Item-specific explanations (correct)
+        correctTowelMask: "正確!\n保護呼吸道,需立即拿取,請放上層。",
+        correctSmokeMask: "正確!\n保護呼吸道,需立即拿取,請放上層。",
+        correctPhone: "正確!\n手機屬於貴重且較重物品,放在中層保護最安全。",
+        correctKeys: "正確!\n重要文件和鑰匙應放在中間主層,不易掉落。",
+        correctFirstAid: "正確!\n藥物細小易丟,應單獨放在側袋方便尋找。",
+        correctWaterBooks: "正確!\n水屬於較重物品,應放在中層。",
+
+        // Item-specific explanations (incorrect)
+        incorrectTowelMask: "錯誤!\n位置不對!應放在上層。\n原因:逃生時需第一時間使用(捂口鼻),必須放在最上層易取處!",
+        incorrectSmokeMask: "錯誤!\n位置不對!應放在上層。\n原因:逃生時需第一時間使用(捂口鼻),必須放在最上層易取處!",
+        incorrectPhone: "錯誤!\n位置不對!應放在中層。\n原因:手機屬於貴重且較重物品,放在中層保護最安全。",
+        incorrectKeys: "錯誤!\n位置不對!應放在中層。\n原因:重要文件和鑰匙應放在中間主層,不易掉落。",
+        incorrectFirstAid: "錯誤!\n位置不對!應放在側袋。\n原因:藥物細小易丟,應單獨放在側袋方便尋找。",
+        incorrectWaterBooks: "錯誤!\n這太重了!走佬袋原則是輕便(≤1.5kg),逃生不應帶書。",
+        tooHeavyBooks: "這太重了!走佬袋原則是輕便(≤1.5kg),逃生不應帶書。",
+
+        // New words to translate (these should already be in Chinese, but confirming)
+        Status: "狀態",
+        Finish: "完成",
+        Question: "問題",
+        confirm: "確定",
+        allItemsPlaced: "所有物品已放置",
+        prepare: "準備",
+        alerts: "警報",
+        advice: "建議",
+
+        Question: "問題",
+        Status: "狀態",
+        Finish: "完成",
+        question: "問題",
+        status: "狀態",
+        finish: "完成"
     }
 };
 

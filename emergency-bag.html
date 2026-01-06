@@ -497,31 +497,31 @@
             'water-books': 'middle'
         };
 
-        // Explanation messages in Chinese
+        // Dynamic placement explanations that use the translation system
         const placementExplanations = {
             'wet-towel': {
-                correct: '正確!\n保護呼吸道,需立即拿取,請放上層。',
-                incorrect: '錯誤!\n位置不對!應放在上層。\n原因:逃生時需第一時間使用(捂口鼻),必須放在最上層易取處!'
+                correct: () => getText('correctTowelMask'),
+                incorrect: () => getText('incorrectTowelMask')
             },
             'smoke-mask': {
-                correct: '正確!\n保護呼吸道,需立即拿取,請放上層。',
-                incorrect: '錯誤!\n位置不對!應放在上層。\n原因:逃生時需第一時間使用(捂口鼻),必須放在最上層易取處!'
+                correct: () => getText('correctSmokeMask'),
+                incorrect: () => getText('incorrectSmokeMask')
             },
             'phone-powerbank': {
-                correct: '正確!\n手機屬於貴重且較重物品,放在中層保護最安全。',
-                incorrect: '錯誤!\n位置不對!應放在中層。\n原因:手機屬於貴重且較重物品,放在中層保護最安全。'
+                correct: () => getText('correctPhone'),
+                incorrect: () => getText('incorrectPhone')
             },
             'keys-documents': {
-                correct: '正確!\n重要文件和鑰匙應放在中間主層,不易掉落。',
-                incorrect: '錯誤!\n位置不對!應放在中層。\n原因:重要文件和鑰匙應放在中間主層,不易掉落。'
+                correct: () => getText('correctKeys'),
+                incorrect: () => getText('incorrectKeys')
             },
             'first-aid': {
-                correct: '正確!\n藥物細小易丟,應單獨放在側袋方便尋找。',
-                incorrect: '錯誤!\n位置不對!應放在側袋。\n原因:藥物細小易丟,應單獨放在側袋方便尋找。'
+                correct: () => getText('correctFirstAid'),
+                incorrect: () => getText('incorrectFirstAid')
             },
             'water-books': {
-                correct: '正確!\n水屬於較重物品,應放在中層。',
-                incorrect: '錯誤!\n這太重了!走佬袋原則是輕便(≤1.5kg),逃生不應帶書。'
+                correct: () => getText('correctWaterBooks'),
+                incorrect: () => getText('incorrectWaterBooks')
             }
         };
 
@@ -665,7 +665,7 @@
                 
                 // Check weight limit (only if adding a NEW item, not when moving)
                 if (currentWeight + weight > maxWeight) {
-                    showDialog('錯誤!', '這太重了!走佬袋原則是輕便(≤1.5kg),逃生不應帶書。', 'error');
+                    showDialog(getText('incorrectPlacement'), getText('tooHeavyBooks'), 'error');
                     // Restore item to list
                     const category = correctPlacements[itemId] || 'middle';
                     const restoredItem = createItemElement(itemId, weight, category);
@@ -751,7 +751,7 @@
                 // Cap at 100
                 if (currentScore > 100) currentScore = 100;
                 updateSafetyScore(currentScore);
-                showDialog('正確', placementExplanations[itemId].correct, 'success');
+                showDialog(getText('correctPlacement'), placementExplanations[itemId].correct(), 'success');
                                 // Mark this item as correctly placed
                                 correctlyPlacedItems.add(itemId);
                 // Check for completion immediately after correct placement
@@ -767,7 +767,7 @@
                     compartmentContent: compartmentContent
                 };
                 
-                showDialog('錯誤', placementExplanations[itemId].incorrect, 'error');
+                showDialog(getText('incorrectPlacement'), placementExplanations[itemId].incorrect(), 'error');
             }
         };
 
@@ -1176,7 +1176,7 @@
 
             // Check weight
             if (currentWeight > maxWeight) {
-                showDialog('錯誤', '這太重了!走佬袋原則是輕便(≤1.5kg),請調整物品。', 'error');
+                showDialog(getText('incorrectPlacement'), getText('adjustItems'), 'error');
                 return;
             }
 
@@ -1230,10 +1230,10 @@
                     // Show completion screen with actual score
                     showCompletionScreen(finalScore);
                 } else {
-                    showDialog('錯誤', '請將所有5個物品放入正確的背包隔層。', 'error');
+                    showDialog(getText('incorrectPlacement'), getText('allItemsCorrect'), 'error');
                 }
             } else {
-                showDialog('錯誤', '請將所有5個物品放入背包隔層。', 'error');
+                showDialog(getText('incorrectPlacement'), getText('placeAllItems'), 'error');
             }
 
             updateCompletion();
@@ -1327,12 +1327,12 @@
             if (type === 'success') {
                 modal.className = 'dialog-modal dialog-success';
                 dialogIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
-                dialogTitle.textContent = '正確';
+                dialogTitle.textContent = 'Correct';
                 dialogTitle.className = 'dialog-title dialog-title-success';
             } else if (type === 'error') {
                 modal.className = 'dialog-modal dialog-error';
                 dialogIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/></svg>';
-                dialogTitle.textContent = '錯誤';
+                dialogTitle.textContent = 'Incorrect';
                 dialogTitle.className = 'dialog-title dialog-title-error';
             }
 
@@ -1395,7 +1395,7 @@
                 updateCompletion();
                 
                 // Show success message after auto-move
-                showDialog('自動排序完成', placementExplanations[move.itemId].correct, 'success');
+                showDialog(getText('autoSortingComplete'), placementExplanations[move.itemId].correct(), 'success');
                 
                 isAutoMoving = false; // Reset flag
                 
